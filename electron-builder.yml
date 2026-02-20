@@ -1,0 +1,82 @@
+appId: com.scrobot.afterposten
+productName: Post Studio
+copyright: Copyright © 2025 scrobot
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - "electron/**/*"
+  - ".next/standalone/**/*"
+  - ".next/static/**/*"
+  - "public/**/*"
+  - "prisma/**/*"
+  - "node_modules/.prisma/**/*"
+  - "node_modules/@prisma/**/*"
+  - "node_modules/better-sqlite3/**/*"
+  - "!node_modules/.cache"
+
+extraResources:
+  - from: ".next/standalone"
+    to: "app"
+    filter:
+      - "**/*"
+  - from: ".next/static"
+    to: "app/.next/static"
+    filter:
+      - "**/*"
+  - from: "public"
+    to: "app/public"
+    filter:
+      - "**/*"
+  - from: "prisma"
+    to: "app/prisma"
+    filter:
+      - "**/*"
+
+mac:
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: zip
+      arch:
+        - x64
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+
+dmg:
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+publish: null
