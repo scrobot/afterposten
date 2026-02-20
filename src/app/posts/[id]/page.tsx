@@ -94,6 +94,7 @@ export default function PostEditorPage() {
     });
 
     const {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         object: variantsObject,
         submit: submitVariants,
         isLoading: variantsLoading,
@@ -152,7 +153,7 @@ export default function PostEditorPage() {
         }
     };
 
-    const useDraft = (draft: DraftOutput) => {
+    const applyDraft = (draft: DraftOutput) => {
         const text = formatDraftToText(draft);
         setFinalText(text);
         savePost({ finalText: text, status: "review" });
@@ -370,7 +371,7 @@ export default function PostEditorPage() {
                                         </span>
                                         <button
                                             className="btn btn-xs btn-primary"
-                                            onClick={() => useDraft(d.parsed)}
+                                            onClick={() => applyDraft(d.parsed)}
                                         >
                                             Use This →
                                         </button>
@@ -426,6 +427,7 @@ export default function PostEditorPage() {
 
                         {post.assets.length > 0 && (
                             <div className="asset-preview">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={post.assets[0].path} alt={post.assets[0].altText} />
                                 <div className="asset-meta">
                                     {post.assets[0].altText && (
