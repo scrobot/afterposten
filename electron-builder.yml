@@ -12,10 +12,7 @@ files:
   - ".next/static/**/*"
   - "public/**/*"
   - "prisma/**/*"
-  - "node_modules/.prisma/**/*"
-  - "node_modules/@prisma/**/*"
-  - "node_modules/better-sqlite3/**/*"
-  - "!node_modules/.cache"
+  - "package.json"
 
 extraResources:
   - from: ".next/standalone"
@@ -26,28 +23,20 @@ extraResources:
     to: "app/.next/static"
     filter:
       - "**/*"
-  - from: "public"
-    to: "app/public"
-    filter:
-      - "**/*"
-  - from: "prisma"
-    to: "app/prisma"
-    filter:
-      - "**/*"
 
 mac:
   category: public.app-category.productivity
+  icon: build/icon.png
   target:
     - target: dmg
       arch:
         - x64
-        - arm64
     - target: zip
       arch:
         - x64
-        - arm64
 
 win:
+  icon: build/icon.png
   target:
     - target: nsis
       arch:
@@ -57,6 +46,8 @@ win:
         - x64
 
 linux:
+  icon: build/icon.png
+  category: Office
   target:
     - target: AppImage
       arch:
