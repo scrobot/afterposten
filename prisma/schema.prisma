@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Post {
+  id                  String    @id @default(uuid())
+  idea                String
+  language            String    @default("en")
+  status              String    @default("idea") // idea | draft | review | scheduled | published | failed
+  finalText           String?   @map("final_text")
+  publisherProfileId  String?   @map("publisher_profile_id")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  drafts       Draft[]
+  assets       Asset[]
+  schedules    Schedule[]
+  publishRuns  PublishRun[]
+  publisherProfile PublisherProfile? @relation(fields: [publisherProfileId], references: [id], onDelete: SetNull)
+
+  @@map("posts")
+}
+
+model Draft {
+  id          String   @id @default(uuid())
+  postId      String   @map("post_id")
+  kind        String   // draft | variant
+  contentJson String   @map("content_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("drafts")
+}
+
+model Asset {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  type      String   // image_png | image_jpeg
+  path      String
+  altText   String   @default("") @map("alt_text")
+  metaJson  String   @default("{}") @map("meta_json")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("assets")
+}
+
+model Schedule {
+  id                 String    @id @default(uuid())
+  postId             String    @map("post_id")
+  publisherProfileId String?   @map("publisher_profile_id")
+  scheduledAtUtc     DateTime  @map("scheduled_at_utc")
+  scheduledTz        String    @map("scheduled_tz")
+  status             String    @default("scheduled") // scheduled | running | done | failed
+  lockedUntil        DateTime? @map("locked_until")
+  attempts           Int       @default(0)
+  lastError          String?   @map("last_error")
+
+  post             Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
+  publisherProfile PublisherProfile?  @relation(fields: [publisherProfileId], references: [id], onDelete: SetNull)
+  publishRuns      PublishRun[]
+
+  @@map("schedules")
+}
+
+model PublishRun {
+  id                 String   @id @default(uuid())
+  postId             String   @map("post_id")
+  scheduleId         String   @map("schedule_id")
+  publisherProfileId String   @map("publisher_profile_id")
+  status             String   // success | failed
+  requestMetaJson    String   @default("{}") @map("request_meta_json")
+  responseMetaJson   String   @default("{}") @map("response_meta_json")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  post             Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
+  schedule         Schedule         @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  publisherProfile PublisherProfile @relation(fields: [publisherProfileId], references: [id])
+
+  @@map("publish_runs")
+}
+
+model PublisherProfile {
+  id                 String   @id @default(uuid())
+  name               String
+  webhookUrl         String   @map("webhook_url")
+  authType           String   @default("none") @map("auth_type") // none | header | bearer
+  authHeaderName     String?  @map("auth_header_name")
+  authHeaderValueEnc String?  @map("auth_header_value_enc")
+  bearerTokenEnc     String?  @map("bearer_token_enc")
+  binaryFieldName    String   @default("mediaFile") @map("binary_field_name")
+  extraPayloadJson   String   @default("{}") @map("extra_payload_json")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  posts       Post[]
+  schedules   Schedule[]
+  publishRuns PublishRun[]
+  defaultFor  AppSettings[] @relation("DefaultPublisherProfile")
+
+  @@map("publisher_profiles")
+}
+
+model AppSettings {
+  id                        String  @id @default("singleton")
+  timezone                  String  @default("Europe/Belgrade")
+  schedulerPollIntervalSec  Int     @default(10) @map("scheduler_poll_interval_sec")
+  defaultPublisherProfileId String? @map("default_publisher_profile_id")
+  maxPublishAttempts        Int     @default(5) @map("max_publish_attempts")
+
+  defaultPublisherProfile PublisherProfile? @relation("DefaultPublisherProfile", fields: [defaultPublisherProfileId], references: [id], onDelete: SetNull)
+
+  @@map("app_settings")
+}
