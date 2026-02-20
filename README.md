@@ -1,36 +1,194 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+# 📮 Post Studio
 
-First, run the development server:
+**AI-powered LinkedIn post creation, scheduling, and publishing — as a desktop app.**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+[![CI](https://github.com/scrobot/afterposten/actions/workflows/ci.yml/badge.svg)](https://github.com/scrobot/afterposten/actions/workflows/ci.yml)
+[![Release](https://github.com/scrobot/afterposten/actions/workflows/release.yml/badge.svg)](https://github.com/scrobot/afterposten/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+*From idea to published LinkedIn post in minutes, not hours.*
+
+</div>
+
+---
+
+## ✨ What is this?
+
+Post Studio is a **local-first desktop app** that turns rough ideas into polished LinkedIn posts using AI. Write an idea, generate multiple draft variants, pick your favorite, attach an AI-generated image, schedule it, and publish to LinkedIn via n8n webhooks — all from one clean interface.
+
+**No cloud accounts. No subscriptions. Your data stays on your machine.**
+
+<div align="center">
+
+<img src="docs/demo.webp" alt="Post Studio Demo" width="700" />
+
+*Create → Generate → Edit → Schedule → Publish*
+
+</div>
+
+## 🚀 Features
+
+| Feature | Description |
+|---------|-------------|
+| 💡 **Idea → Draft** | Paste an idea, AI generates a full LinkedIn post with hook, body, CTA, and hashtags |
+| 🔄 **Variant Generation** | Get 3–5 different angles on the same idea, pick the best one |
+| 🖼️ **AI Image Generation** | Generate post images with style presets (clean-tech, editorial, bold-minimal, etc.) |
+| #️⃣ **Smart Hashtags** | AI suggests 5–15 relevant hashtags based on your content |
+| 📅 **Scheduling** | Set a date/time in your timezone, the scheduler handles the rest |
+| 🔌 **n8n Integration** | Publish via webhook with multipart/form-data — text, image, metadata |
+| 🔒 **Encrypted Credentials** | Publisher auth tokens encrypted at rest (AES-256-GCM) |
+| 🧠 **RAG Hooks** | Optional voice/style context from external RAG for brand consistency |
+| ⚡ **Real-time Streaming** | Watch the AI draft appear word-by-word as it generates |
+| 🖥️ **Desktop App** | Runs as a native Electron app on macOS, Windows, and Linux |
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    Electron Shell                    │
+│  ┌───────────────────────────────────────────────┐  │
+│  │              Next.js (App Router)              │  │
+│  │  ┌─────────┐  ┌──────────┐  ┌─────────────┐  │  │
+│  │  │  Posts   │  │ Settings │  │  Post Editor │  │  │
+│  │  │  List    │  │   Page   │  │  + AI Panel  │  │  │
+│  │  └────┬────┘  └────┬─────┘  └──────┬──────┘  │  │
+│  │       │             │               │          │  │
+│  │       └─────────────┼───────────────┘          │  │
+│  │                     ▼                          │  │
+│  │              API Routes (13)                   │  │
+│  │       ┌─────┬──────┬───────┬──────┐           │  │
+│  │       │ AI  │ Pub  │ Sched │ CRUD │           │  │
+│  │       └──┬──┴──┬───┴───┬───┴──┬───┘           │  │
+│  │          │     │       │      │                │  │
+│  │          ▼     ▼       ▼      ▼                │  │
+│  │       OpenAI  n8n   Poller  SQLite             │  │
+│  │        API   Webhook        (Prisma)           │  │
+│  └───────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📥 Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Download (Recommended)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Grab the latest release for your platform from [**Releases**](https://github.com/scrobot/afterposten/releases):
 
-## Learn More
+| Platform | Format |
+|----------|--------|
+| macOS (Apple Silicon) | `.dmg` / `.zip` |
+| macOS (Intel) | `.dmg` / `.zip` |
+| Windows | `.exe` (NSIS installer) / `.zip` |
+| Linux | `.AppImage` / `.deb` |
 
-To learn more about Next.js, take a look at the following resources:
+### Build from Source
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Clone the repo
+git clone https://github.com/scrobot/afterposten.git
+cd afterposten
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Install dependencies
+pnpm install
 
-## Deploy on Vercel
+# Set up the database
+pnpm db:migrate
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Configure environment
+cp .env.example .env
+# Edit .env with your OpenAI API key and encryption key
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## ⚙️ Configuration
+
+Create a `.env` file in the project root:
+
+```env
+# Required: Your OpenAI API key
+OPENAI_API_KEY=sk-...
+
+# Required: 64-char hex string for encrypting publisher credentials
+# Generate one: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+ENCRYPTION_KEY=your-64-char-hex-string
+
+# Optional: Database location (defaults to file:./dev.db)
+DATABASE_URL=file:./dev.db
+
+# Optional: RAG integration for voice/style consistency
+MEMORY_SOURCE_URL=
+MEMORY_SINK_URL=
+```
+
+## 🛠️ Development
+
+```bash
+# Start Next.js dev server (web mode)
+pnpm dev
+
+# Start in Electron (desktop mode)
+pnpm dev:electron
+
+# Run unit tests (37 tests)
+pnpm test
+
+# Type check
+pnpm typecheck
+
+# Build Electron app for current platform
+pnpm build:electron
+```
+
+## 🔌 n8n Integration
+
+Post Studio publishes via **n8n webhooks**. Set up a workflow in n8n that:
+
+1. Receives a **Webhook** trigger (POST, multipart/form-data)
+2. Reads the fields: `text`, `hashtags` (JSON array), `postId`, `scheduledAt`
+3. Reads the binary image from the `mediaFile` field (configurable)
+4. Posts to LinkedIn using the LinkedIn node
+
+### Authentication Options
+
+| Mode | Description |
+|------|-------------|
+| **None** | No auth (for local n8n instances) |
+| **Custom Header** | Send a custom header (e.g., `X-Auth-Key: secret`) |
+| **Bearer Token** | Standard `Authorization: Bearer <token>` |
+
+All auth credentials are **AES-256-GCM encrypted** at rest in the local database.
+
+## 🧪 Testing
+
+```bash
+pnpm test           # 37 unit tests (Vitest)
+pnpm test:watch     # Watch mode
+pnpm test:e2e       # E2E tests (Playwright, requires browser install)
+pnpm typecheck      # TypeScript strict mode
+```
+
+### Test Coverage
+
+| Suite | Tests | What it covers |
+|-------|-------|----------------|
+| `schemas.test.ts` | 19 | Zod schema validation for all AI contracts |
+| `tz-utils.test.ts` | 10 | Timezone conversion (CET/CEST, midnight, boundaries) |
+| `publisher-adapter.test.ts` | 5 | n8n adapter auth modes, FormData, sanitized logging |
+| `crypto.test.ts` | 3 | AES-256-GCM encrypt/decrypt, random IV |
+
+## 🏛️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Desktop** | Electron 40 |
+| **Frontend** | Next.js 16 (App Router), React 19, TypeScript |
+| **AI** | Vercel AI SDK (`streamObject`), OpenAI GPT-4o / GPT-Image-1 |
+| **Database** | SQLite (Prisma 7 + better-sqlite3 driver adapter) |
+| **Scheduling** | Polling scheduler with atomic locking and exponential backoff |
+| **Publishing** | n8n webhooks via multipart/form-data |
+| **Security** | AES-256-GCM encryption for auth credentials |
+| **Testing** | Vitest + Playwright |
+
+## 📄 License
+
+MIT © [scrobot](https://github.com/scrobot)
