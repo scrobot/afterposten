@@ -48,3 +48,6 @@ dev.db
 /dist/
 /build/*
 !build/icon.png
+
+# vectra vector indexes
+/data/

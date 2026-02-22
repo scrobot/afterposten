@@ -1,8 +1,10 @@
 /**
- * Memory Sink — optional RAG integration for auto-learning from published posts.
- * Sends published content to an external RAG platform for learning/indexing.
+ * Memory Sink — auto-learning from published posts via embedded Vectra.
+ * Indexes published post content locally for future voice/style retrieval.
  * Best-effort: failures are logged but never block publishing.
  */
+import { indexPost } from "./vectra-posts";
+
 export async function ingestPublishedPost(data: {
     postId: string;
     text: string;
@@ -11,34 +13,14 @@ export async function ingestPublishedPost(data: {
     altText?: string | null;
     publishedAt: string;
 }): Promise<boolean> {
-    const url = process.env.MEMORY_SINK_URL;
-    if (!url) return false;
-
     try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                type: "linkedin_post",
-                postId: data.postId,
-                content: data.text,
-                hashtags: data.hashtags,
-                imagePath: data.imagePath,
-                altText: data.altText,
-                publishedAt: data.publishedAt,
-                metadata: {
-                    source: "afterposten",
-                    language: "en",
-                },
-            }),
-            signal: AbortSignal.timeout(5000),
+        await indexPost({
+            postId: data.postId,
+            idea: "", // idea not available here; text is the primary content
+            finalText: data.text,
+            hashtags: data.hashtags,
+            status: "published",
         });
-
-        if (!response.ok) {
-            console.warn(`Memory Sink ingestion returned ${response.status}`);
-            return false;
-        }
-
         return true;
     } catch (error) {
         console.warn(

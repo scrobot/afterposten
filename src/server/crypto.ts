@@ -1,11 +1,12 @@
 import crypto from "node:crypto";
+import { env } from "@/config/env";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 
 function getKey(): Buffer {
-    const hex = process.env.ENCRYPTION_KEY;
-    if (!hex || hex.length !== 64) {
+    const hex = env.ENCRYPTION_KEY;
+    if (hex.length !== 64) {
         throw new Error(
             "ENCRYPTION_KEY must be a 64-char hex string (32 bytes). Generate: openssl rand -hex 32"
         );
@@ -21,10 +22,7 @@ export function encrypt(plaintext: string): string {
     const key = getKey();
     const iv = crypto.randomBytes(IV_LENGTH);
     const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
-    const encrypted = Buffer.concat([
-        cipher.update(plaintext, "utf8"),
-        cipher.final(),
-    ]);
+    const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
     const tag = cipher.getAuthTag();
     return `${iv.toString("hex")}:${encrypted.toString("hex")}:${tag.toString("hex")}`;
 }

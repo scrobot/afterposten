@@ -1,35 +1,30 @@
 /**
- * Memory Source — optional RAG integration for voice/style context.
- * Fetches context from an external RAG platform to improve AI generation quality.
- * Best-effort: returns null if not configured or if the request fails.
+ * Memory Source — voice/style context from embedded Vectra.
+ * Queries both the posts index (similar past posts) and the knowledge base
+ * to build a rich context for AI generation.
+ * Best-effort: returns null if queries fail.
  */
-export async function fetchVoiceContext(): Promise<string | null> {
-    const url = process.env.MEMORY_SOURCE_URL;
-    if (!url) return null;
+import { queryRelatedPosts } from "./vectra-posts";
+import { getKnowledgeContext } from "./vectra-knowledge";
 
+/**
+ * Fetch voice/style context for an idea by querying local Vectra indexes.
+ * Returns a combined context string from similar posts and knowledge base.
+ */
+export async function fetchVoiceContext(idea: string): Promise<string | null> {
     try {
-        const response = await fetch(url, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            signal: AbortSignal.timeout(5000),
-        });
+        const [postsContext, knowledgeContext] = await Promise.all([
+            queryRelatedPosts(idea, 3),
+            getKnowledgeContext(idea),
+        ]);
 
-        if (!response.ok) {
-            console.warn(`Memory Source returned ${response.status}`);
-            return null;
-        }
+        const parts: string[] = [];
+        if (postsContext) parts.push(postsContext);
+        if (knowledgeContext) parts.push(knowledgeContext);
 
-        const data = await response.json();
-        // Expect { context: string } or { styleProfile: string, examples: string[] }
-        if (typeof data === "string") return data;
-        if (data?.context) return data.context;
-        if (data?.styleProfile) {
-            const examples = data.examples?.length
-                ? `\n\nExamples:\n${data.examples.join("\n---\n")}`
-                : "";
-            return `${data.styleProfile}${examples}`;
-        }
-        return JSON.stringify(data);
+        if (parts.length === 0) return null;
+
+        return parts.join("\n\n---\n\n");
     } catch (error) {
         console.warn(
             "Memory Source fetch failed (best-effort):",

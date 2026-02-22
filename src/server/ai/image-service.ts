@@ -1,22 +1,22 @@
 import OpenAI from "openai";
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
-import fs from "node:fs";
+import fs from "node:fs/promises";
 import path from "node:path";
 import { v4 as uuidv4 } from "uuid";
 import type { ImageRequest, AltTextOutput } from "@/shared/types";
 import { altTextOutputSchema } from "@/shared/types";
+import { env } from "@/config/env";
+import { MODEL_IMAGE, MODEL_TEXT_PRIMARY } from "@/config/constants";
 
 const ASSETS_DIR = path.join(process.cwd(), "public", "assets");
 
 function getOpenAIClient() {
-    return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    return new OpenAI({ apiKey: env.OPENAI_API_KEY });
 }
 
-function ensureAssetsDir() {
-    if (!fs.existsSync(ASSETS_DIR)) {
-        fs.mkdirSync(ASSETS_DIR, { recursive: true });
-    }
+async function ensureAssetsDir() {
+    await fs.mkdir(ASSETS_DIR, { recursive: true });
 }
 
 /**
@@ -41,9 +41,7 @@ function getStylePromptModifier(preset: string): string {
 /**
  * Map aspect ratios to OpenAI image generation size params.
  */
-function getImageSize(
-    aspect: string
-): "1024x1024" | "1024x1536" | "1536x1024" {
+function getImageSize(aspect: string): "1024x1024" | "1024x1536" | "1536x1024" {
     switch (aspect) {
         case "4:5":
             return "1024x1536";
@@ -62,7 +60,7 @@ export async function generateImage(
     request: ImageRequest,
     postId: string
 ): Promise<{ filePath: string; publicPath: string; metaJson: string }> {
-    ensureAssetsDir();
+    await ensureAssetsDir();
 
     const client = getOpenAIClient();
     const styleModifier = getStylePromptModifier(request.stylePreset);
@@ -70,7 +68,7 @@ export async function generateImage(
     const size = getImageSize(request.aspect);
 
     const response = await client.images.generate({
-        model: "gpt-image-1",
+        model: MODEL_IMAGE,
         prompt: fullPrompt,
         n: 1,
         size,
@@ -87,7 +85,7 @@ export async function generateImage(
     const filePath = path.join(ASSETS_DIR, filename);
 
     const buffer = Buffer.from(imageData.b64_json, "base64");
-    fs.writeFileSync(filePath, buffer);
+    await fs.writeFile(filePath, buffer);
 
     const publicPath = `/assets/${filename}`;
     const metaJson = JSON.stringify({
@@ -95,7 +93,7 @@ export async function generateImage(
         stylePreset: request.stylePreset,
         aspect: request.aspect,
         format: request.format,
-        model: "gpt-image-1",
+        model: MODEL_IMAGE,
         size,
     });
 
@@ -110,7 +108,7 @@ export async function generateAltText(
     postContext: string
 ): Promise<AltTextOutput> {
     const result = await generateObject({
-        model: openai("gpt-4o"),
+        model: openai(MODEL_TEXT_PRIMARY),
         schema: altTextOutputSchema,
         messages: [
             {
@@ -122,9 +120,7 @@ export async function generateAltText(
                     },
                     {
                         type: "image",
-                        image: fs.readFileSync(
-                            path.join(process.cwd(), "public", imagePath)
-                        ),
+                        image: await fs.readFile(path.join(process.cwd(), "public", imagePath)),
                     },
                 ],
             },

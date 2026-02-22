@@ -7,6 +7,7 @@ import { publishToN8n } from "../publishers/n8n-adapter";
 import { ingestPublishedPost } from "../rag/memory-sink";
 import { utcToLocal } from "./tz-utils";
 import type { PublishPayload } from "../publishers/n8n-adapter";
+import { BACKOFF_BASE_MS, BACKOFF_CEILING_MS, DEFAULT_POLL_INTERVAL_MS } from "@/config/constants";
 
 /**
  * Execute a single scheduler tick:
@@ -65,8 +66,11 @@ export async function schedulerTick(): Promise<{
             let extraFields: Record<string, string> = {};
             try {
                 extraFields = JSON.parse(profile.extraPayloadJson || "{}");
-            } catch {
-                /* ignore parse errors */
+            } catch (e) {
+                console.warn(
+                    "Failed to parse extraPayloadJson:",
+                    e instanceof Error ? e.message : e
+                );
             }
 
             // Parse hashtags from final text or drafts
@@ -75,8 +79,11 @@ export async function schedulerTick(): Promise<{
                 try {
                     const draftContent = JSON.parse(post.drafts[0].contentJson);
                     hashtags = draftContent.hashtags ?? [];
-                } catch {
-                    /* ignore */
+                } catch (e) {
+                    console.warn(
+                        "Failed to parse draft hashtags:",
+                        e instanceof Error ? e.message : e
+                    );
                 }
             }
 
@@ -132,22 +139,17 @@ export async function schedulerTick(): Promise<{
                 );
             }
         } catch (error) {
-            const errorMsg =
-                error instanceof Error ? error.message : "Unknown error";
+            const errorMsg = error instanceof Error ? error.message : "Unknown error";
             errors.push(`Schedule ${schedule.id}: ${errorMsg}`);
             failed++;
 
             // Calculate backoff: min(60s * attempts, 15m)
-            const backoffMs = Math.min(60_000 * schedule.attempts, 15 * 60_000);
+            const backoffMs = Math.min(BACKOFF_BASE_MS * schedule.attempts, BACKOFF_CEILING_MS);
 
             if (schedule.attempts < maxAttempts) {
                 // Reschedule with backoff
                 const rescheduleAt = new Date(Date.now() + backoffMs);
-                await schedulesRepo.markScheduleFailed(
-                    schedule.id,
-                    errorMsg,
-                    rescheduleAt
-                );
+                await schedulesRepo.markScheduleFailed(schedule.id, errorMsg, rescheduleAt);
             } else {
                 // Max attempts exceeded — permanent failure
                 await schedulesRepo.markScheduleFailed(schedule.id, errorMsg);
@@ -169,7 +171,7 @@ let pollerInterval: ReturnType<typeof setInterval> | null = null;
 /**
  * Start the scheduler poller.
  */
-export function startSchedulerPoller(intervalMs: number = 10_000) {
+export function startSchedulerPoller(intervalMs: number = DEFAULT_POLL_INTERVAL_MS) {
     if (pollerInterval) {
         console.log("Scheduler poller already running");
         return;

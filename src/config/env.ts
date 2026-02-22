@@ -28,16 +28,6 @@ export const env = {
         return required("ENCRYPTION_KEY");
     },
 
-    /** Optional Memory Source URL (RAG platform) */
-    get MEMORY_SOURCE_URL(): string {
-        return optional("MEMORY_SOURCE_URL");
-    },
-
-    /** Optional Memory Sink URL (RAG platform) */
-    get MEMORY_SINK_URL(): string {
-        return optional("MEMORY_SINK_URL");
-    },
-
     /** Node environment */
     get NODE_ENV(): string {
         return optional("NODE_ENV", "development");

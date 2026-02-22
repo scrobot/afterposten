@@ -1,7 +1,9 @@
-import fs from "node:fs";
+import fs from "node:fs/promises";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import type { PublisherProfile } from "@/generated/prisma/client";
 import { decrypt } from "../crypto";
+import { LOG_TEXT_TRUNCATION_LENGTH } from "@/config/constants";
 
 export interface PublishPayload {
     text: string;
@@ -106,11 +108,10 @@ export async function publishToN8n(
     let hasImage = false;
     if (payload.imagePath) {
         const absolutePath = path.join(process.cwd(), "public", payload.imagePath);
-        if (fs.existsSync(absolutePath)) {
-            const imageBuffer = fs.readFileSync(absolutePath);
+        if (existsSync(absolutePath)) {
+            const imageBuffer = await fs.readFile(absolutePath);
             const ext = payload.imageFormat === "jpeg" ? "jpg" : "png";
-            const contentType =
-                payload.imageFormat === "jpeg" ? "image/jpeg" : "image/png";
+            const contentType = payload.imageFormat === "jpeg" ? "image/jpeg" : "image/png";
             const filename = `post-${payload.postId}.${ext}`;
 
             const blob = new Blob([imageBuffer], { type: contentType });
@@ -121,7 +122,9 @@ export async function publishToN8n(
 
     // Build request metadata for logging (no secrets, no binary)
     const allTextFields: Record<string, string> = {
-        text: payload.text.substring(0, 100) + (payload.text.length > 100 ? "..." : ""),
+        text:
+            payload.text.substring(0, LOG_TEXT_TRUNCATION_LENGTH) +
+            (payload.text.length > LOG_TEXT_TRUNCATION_LENGTH ? "..." : ""),
         hashtags: JSON.stringify(payload.hashtags),
         postId: payload.postId,
         scheduledAt: payload.scheduledAt,

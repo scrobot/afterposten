@@ -1,4 +1,5 @@
 import { prisma } from "../prisma";
+import { LOCK_DURATION_MS } from "@/config/constants";
 
 /**
  * Find due schedules and atomically lock them for processing.
@@ -6,17 +7,14 @@ import { prisma } from "../prisma";
  */
 export async function findAndLockDueSchedules(maxAttempts: number) {
     const now = new Date();
-    const lockUntil = new Date(now.getTime() + 60_000); // lock for 60s
+    const lockUntil = new Date(now.getTime() + LOCK_DURATION_MS); // lock for duration
 
     // Find due schedules
     const dueSchedules = await prisma.schedule.findMany({
         where: {
             status: "scheduled",
             scheduledAtUtc: { lte: now },
-            OR: [
-                { lockedUntil: null },
-                { lockedUntil: { lt: now } },
-            ],
+            OR: [{ lockedUntil: null }, { lockedUntil: { lt: now } }],
             attempts: { lt: maxAttempts },
         },
         include: {
@@ -75,11 +73,7 @@ export async function markScheduleDone(id: string) {
     });
 }
 
-export async function markScheduleFailed(
-    id: string,
-    error: string,
-    rescheduleAtUtc?: Date
-) {
+export async function markScheduleFailed(id: string, error: string, rescheduleAtUtc?: Date) {
     if (rescheduleAtUtc) {
         // Reschedule with backoff
         return prisma.schedule.update({

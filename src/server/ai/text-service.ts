@@ -1,10 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import { streamObject, generateObject } from "ai";
-import {
-    draftOutputSchema,
-    hashtagsOutputSchema,
-    variantsOutputSchema,
-} from "@/shared/types";
+import { draftOutputSchema, hashtagsOutputSchema, variantsOutputSchema } from "@/shared/types";
+import { MODEL_TEXT_PRIMARY, MODEL_TEXT_LIGHT } from "@/config/constants";
 
 /**
  * Stream a draft from an idea using Vercel AI SDK structured output.
@@ -15,7 +12,7 @@ export function streamDraft(idea: string, voiceContext?: string | null) {
         : "";
 
     return streamObject({
-        model: openai("gpt-4o"),
+        model: openai(MODEL_TEXT_PRIMARY),
         schema: draftOutputSchema,
         prompt: `You are a LinkedIn content strategist. Write a compelling LinkedIn post based on this idea.
 
@@ -36,17 +33,11 @@ Write in English. Keep it professional but engaging. Avoid corporate jargon.`,
 /**
  * Stream multiple draft variants.
  */
-export function streamVariants(
-    idea: string,
-    count: number = 3,
-    voiceContext?: string | null
-) {
-    const contextBlock = voiceContext
-        ? `\n\nVoice/style context:\n${voiceContext}`
-        : "";
+export function streamVariants(idea: string, count: number = 3, voiceContext?: string | null) {
+    const contextBlock = voiceContext ? `\n\nVoice/style context:\n${voiceContext}` : "";
 
     return streamObject({
-        model: openai("gpt-4o"),
+        model: openai(MODEL_TEXT_PRIMARY),
         schema: variantsOutputSchema,
         prompt: `You are a LinkedIn content strategist. Create ${count} distinct variants of a LinkedIn post based on this idea.
 
@@ -70,7 +61,7 @@ Write in English. Make each variant distinctly different.`,
  */
 export function streamHashtags(text: string) {
     return streamObject({
-        model: openai("gpt-4o-mini"),
+        model: openai(MODEL_TEXT_LIGHT),
         schema: hashtagsOutputSchema,
         prompt: `Generate 5–15 highly relevant LinkedIn hashtags for this post. Return them without the # prefix.
 
@@ -88,16 +79,11 @@ Focus on:
 /**
  * Non-streaming draft generation (for testing/internal use).
  */
-export async function generateDraft(
-    idea: string,
-    voiceContext?: string | null
-) {
-    const contextBlock = voiceContext
-        ? `\n\nVoice/style context:\n${voiceContext}`
-        : "";
+export async function generateDraft(idea: string, voiceContext?: string | null) {
+    const contextBlock = voiceContext ? `\n\nVoice/style context:\n${voiceContext}` : "";
 
     const result = await generateObject({
-        model: openai("gpt-4o"),
+        model: openai(MODEL_TEXT_PRIMARY),
         schema: draftOutputSchema,
         prompt: `You are a LinkedIn content strategist. Write a compelling LinkedIn post.
 

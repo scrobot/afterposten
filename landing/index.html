@@ -1,18 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Afterposten — AI-Powered LinkedIn Post Studio</title>
-    <meta name="description" content="Create, schedule, and publish polished LinkedIn posts with AI. Local-first desktop app. No cloud accounts required.">
+    <title>Afterposten. AI Studio — LinkedIn Post Creation & Scheduling</title>
+    <meta name="description"
+        content="Create, schedule, and publish polished LinkedIn posts with AI. Local-first desktop app. No cloud accounts required.">
     <meta name="keywords" content="LinkedIn, AI, content creation, post scheduler, desktop app, Electron, n8n">
-    <meta property="og:title" content="Afterposten — AI-Powered LinkedIn Post Studio">
-    <meta property="og:description" content="From idea to published LinkedIn post in minutes, not hours. Local-first, private, and powerful.">
+    <meta property="og:title" content="Afterposten. AI Studio — LinkedIn Post Creation & Scheduling">
+    <meta property="og:description"
+        content="From idea to published LinkedIn post in minutes, not hours. Local-first, private, and powerful.">
     <meta property="og:type" content="website">
     <link rel="icon" type="image/png" href="logo.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         :root {
             --bg-primary: #06060b;
@@ -29,7 +39,9 @@
             --gradient-end: #a855f7;
         }
 
-        html { scroll-behavior: smooth; }
+        html {
+            scroll-behavior: smooth;
+        }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -98,7 +110,20 @@
             border-radius: 8px;
         }
 
-        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-subtitle {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-left: -2px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
 
         .nav-links a {
             color: var(--text-secondary);
@@ -108,7 +133,9 @@
             transition: color 0.2s;
         }
 
-        .nav-links a:hover { color: var(--text-primary); }
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
 
         .btn {
             display: inline-flex;
@@ -158,7 +185,9 @@
             padding: 120px 24px 80px;
         }
 
-        .hero-content { max-width: 720px; }
+        .hero-content {
+            max-width: 720px;
+        }
 
         .hero-badge {
             display: inline-flex;
@@ -412,12 +441,21 @@
             text-decoration: none;
         }
 
-        footer a:hover { color: var(--accent-light); }
+        footer a:hover {
+            color: var(--accent-light);
+        }
 
         /* ─── Animations ─── */
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .animate-in {
@@ -425,23 +463,56 @@
             animation: fadeInUp 0.7s ease-out forwards;
         }
 
-        .delay-1 { animation-delay: 0.1s; }
-        .delay-2 { animation-delay: 0.2s; }
-        .delay-3 { animation-delay: 0.3s; }
-        .delay-4 { animation-delay: 0.4s; }
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.3s;
+        }
+
+        .delay-4 {
+            animation-delay: 0.4s;
+        }
 
         /* ─── Responsive ─── */
         @media (max-width: 768px) {
-            nav { padding: 12px 20px; }
-            .nav-links { gap: 16px; }
-            .nav-links a { font-size: 13px; }
-            .pipeline { flex-wrap: wrap; gap: 8px; }
-            .pipeline-arrow { display: none; }
-            .features-grid { grid-template-columns: 1fr; }
-            .hero { padding: 100px 20px 60px; }
+            nav {
+                padding: 12px 20px;
+            }
+
+            .nav-links {
+                gap: 16px;
+            }
+
+            .nav-links a {
+                font-size: 13px;
+            }
+
+            .pipeline {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .pipeline-arrow {
+                display: none;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero {
+                padding: 100px 20px 60px;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="bg-grid"></div>
     <div class="bg-glow"></div>
@@ -450,12 +521,13 @@
     <nav>
         <a href="#" class="nav-brand">
             <img src="logo.png" alt="Afterposten">
-            Afterposten
+            <span>Afterposten<br><span class="nav-subtitle">AI Studio</span></span>
         </a>
         <div class="nav-links">
             <a href="#features">Features</a>
             <a href="#stack">Stack</a>
-            <a href="https://github.com/scrobot/afterposten" class="btn btn-secondary" style="padding: 7px 16px; font-size: 13px;">
+            <a href="https://github.com/scrobot/afterposten" class="btn btn-secondary"
+                style="padding: 7px 16px; font-size: 13px;">
                 ⭐ GitHub
             </a>
         </div>
@@ -525,32 +597,38 @@
             <div class="feature-card">
                 <div class="feature-icon">🧠</div>
                 <h3>AI Draft Generation</h3>
-                <p>Paste a rough idea, get a polished LinkedIn post with hook, body, CTA, and hashtags — generated word-by-word in real-time.</p>
+                <p>Paste a rough idea, get a polished LinkedIn post with hook, body, CTA, and hashtags — generated
+                    word-by-word in real-time.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🔄</div>
                 <h3>Variant Engine</h3>
-                <p>Generate 3–5 different angles on the same idea. Pick your favorite, refine, and publish with confidence.</p>
+                <p>Generate 3–5 different angles on the same idea. Pick your favorite, refine, and publish with
+                    confidence.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🖼️</div>
                 <h3>AI Image Generation</h3>
-                <p>Create post images with style presets — clean-tech, editorial, bold-minimal. No stock photos needed.</p>
+                <p>Create post images with style presets — clean-tech, editorial, bold-minimal. No stock photos needed.
+                </p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">📅</div>
                 <h3>Smart Scheduling</h3>
-                <p>Set a date and time in your timezone. The built-in scheduler handles the rest with automatic retries.</p>
+                <p>Set a date and time in your timezone. The built-in scheduler handles the rest with automatic retries.
+                </p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🔌</div>
                 <h3>n8n Integration</h3>
-                <p>Publish via webhooks with multipart/form-data. Includes a ready-made workflow blueprint for instant setup.</p>
+                <p>Publish via webhooks with multipart/form-data. Includes a ready-made workflow blueprint for instant
+                    setup.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🔒</div>
                 <h3>Privacy-First</h3>
-                <p>100% local-first. SQLite database on your machine. Auth credentials encrypted with AES-256-GCM. No cloud dependency.</p>
+                <p>100% local-first. SQLite database on your machine. Auth credentials encrypted with AES-256-GCM. No
+                    cloud dependency.</p>
             </div>
         </div>
     </section>
@@ -574,6 +652,7 @@
             <span class="stack-tag">Playwright</span>
             <span class="stack-tag">AES-256-GCM</span>
             <span class="stack-tag">n8n Webhooks</span>
+            <span class="stack-tag">Vectra (Embedded RAG)</span>
         </div>
     </section>
 
@@ -581,7 +660,8 @@
     <section class="cta">
         <div class="cta-box">
             <h2>Ready to streamline your LinkedIn?</h2>
-            <p>Download Afterposten for free. Open source, MIT licensed, built for creators who care about their craft.</p>
+            <p>Download Afterposten for free. Open source, MIT licensed, built for creators who care about their craft.
+            </p>
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                 <a href="https://github.com/scrobot/afterposten/releases" class="btn btn-primary">
                     Download Latest Release
@@ -620,4 +700,5 @@
         });
     </script>
 </body>
+
 </html>
