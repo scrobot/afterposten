@@ -31,9 +31,11 @@ mac:
     - target: dmg
       arch:
         - x64
+        - arm64
     - target: zip
       arch:
         - x64
+        - arm64
 
 win:
   icon: build/icon.png
@@ -48,13 +50,16 @@ win:
 linux:
   icon: build/icon.png
   category: Office
+  maintainer: "scrobot <scrobot91@gmail.com>"
   target:
     - target: AppImage
       arch:
         - x64
+        - arm64
     - target: deb
       arch:
         - x64
+        - arm64
 
 nsis:
   oneClick: false

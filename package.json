@@ -1,9 +1,12 @@
 {
     "name": "afterposten",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "private": true,
     "main": "electron/main.js",
-    "author": "scrobot",
+    "author": {
+        "name": "scrobot",
+        "email": "scrobot91@gmail.com"
+    },
     "description": "AI-powered LinkedIn post creation, scheduling, and publishing desktop app",
     "scripts": {
         "dev": "next dev",
