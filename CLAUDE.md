@@ -243,3 +243,26 @@ When you report progress in chat, include:
 - What tests were added/updated
 - Any assumptions made (only if needed)
 - No long logs; keep it concise
+
+---
+
+## Behaviour rules
+
+### Electron desktop app compatibility
+
+- **Every** new feature or improvement **must** be verified for Electron desktop app compatibility before considering it done.
+- Check that browser APIs used (e.g., `getUserMedia`, `navigator.clipboard`, `Notification`) are permitted in Electron's security model.
+- If a feature requires Electron-specific permissions, update `electron/main.js` accordingly (e.g., `session.setPermissionRequestHandler`).
+- Run or review `electron-builder.yml` and `electron/main.js` for any build/runtime impact.
+
+### Self-documenting rules
+
+- When a new pattern, convention, or behaviour rule is discovered or established during development, **automatically add it to `CLAUDE.md`**.
+- Do not wait for a separate request — proactively update `CLAUDE.md` as part of the PR/commit that introduces the pattern.
+- This ensures `CLAUDE.md` stays the living source of truth for all project conventions.
+
+### Documentation updates on new features
+
+- **Every** new feature or improvement **must** include corresponding documentation updates in the same commit/PR.
+- Update `README.md` (usage, feature list), `spec.md` (if requirements change), and any other relevant docs.
+- Documentation is not a follow-up task — it ships with the code.

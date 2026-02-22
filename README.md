@@ -36,6 +36,7 @@ _Create → Generate → Edit → Schedule → Publish_
 | 🔄 **Variant Generation**    | Get 3–5 different angles on the same idea, pick the best one                                                  |
 | 🖼️ **AI Image Generation**   | Generate post images with style presets (clean-tech, editorial, bold-minimal, etc.)                           |
 | #️⃣ **Smart Hashtags**        | AI suggests 5–15 relevant hashtags based on your content                                                      |
+| 🎙️ **Voice Input (STT)**     | Speech-to-text via Whisper — speak in any language, get English text for ideas and knowledge base             |
 | 📅 **Scheduling**            | Set a date/time in your timezone, the scheduler handles the rest                                              |
 | 🔌 **n8n Integration**       | Publish via webhook with multipart/form-data — text, image, metadata                                          |
 | 🔒 **Encrypted Credentials** | Publisher auth tokens encrypted at rest (AES-256-GCM)                                                         |

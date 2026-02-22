@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, shell, session } = require("electron");
 const { spawn } = require("child_process");
 const path = require("path");
 const net = require("net");
@@ -118,6 +118,12 @@ function createWindow(port) {
 
 app.whenReady().then(async () => {
     try {
+        // Grant microphone permission for voice input (speech-to-text)
+        session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+            const allowed = ["media", "microphone"].includes(permission);
+            callback(allowed);
+        });
+
         const port = await findAvailablePort(DEV_PORT);
         await startNextServer(port);
         createWindow(port);
