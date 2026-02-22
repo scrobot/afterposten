@@ -13,6 +13,7 @@ import {
     IMAGE_FORMATS,
 } from "@/shared/types";
 import type { DraftOutput } from "@/shared/types";
+import VoiceRecorder from "@/app/_components/VoiceRecorder";
 
 interface PostFull {
     id: string;
@@ -136,7 +137,7 @@ export default function PostEditorPage() {
         fetch("/api/publishers")
             .then((r) => r.json())
             .then(setProfiles)
-            .catch(() => { });
+            .catch(() => {});
     }, [fetchPost]);
 
     const savePost = async (data: Record<string, unknown>) => {
@@ -254,7 +255,14 @@ export default function PostEditorPage() {
                     {/* Idea */}
                     <div className="card">
                         <div className="card-header">
-                            <h3>💡 Idea</h3>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <h3>💡 Idea</h3>
+                                <VoiceRecorder
+                                    onTranscript={(text) =>
+                                        setIdea((prev) => (prev ? `${prev} ${text}` : text))
+                                    }
+                                />
+                            </div>
                             <button
                                 className="btn btn-sm btn-secondary"
                                 onClick={() => savePost({ idea })}
@@ -266,7 +274,7 @@ export default function PostEditorPage() {
                         <textarea
                             value={idea}
                             onChange={(e) => setIdea(e.target.value)}
-                            placeholder="Your post idea..."
+                            placeholder="Your post idea... (or use 🎙️ to speak)"
                             rows={2}
                         />
                     </div>
@@ -461,10 +469,14 @@ export default function PostEditorPage() {
                                 <label>Style Preset</label>
                                 <select
                                     value={imagePreset}
-                                    onChange={(e) => setImagePreset(e.target.value as typeof imagePreset)}
+                                    onChange={(e) =>
+                                        setImagePreset(e.target.value as typeof imagePreset)
+                                    }
                                 >
                                     {STYLE_PRESETS.map((p) => (
-                                        <option key={p} value={p}>{p}</option>
+                                        <option key={p} value={p}>
+                                            {p}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -472,10 +484,14 @@ export default function PostEditorPage() {
                                 <label>Aspect Ratio</label>
                                 <select
                                     value={imageAspect}
-                                    onChange={(e) => setImageAspect(e.target.value as typeof imageAspect)}
+                                    onChange={(e) =>
+                                        setImageAspect(e.target.value as typeof imageAspect)
+                                    }
                                 >
                                     {ASPECT_RATIOS.map((a) => (
-                                        <option key={a} value={a}>{a}</option>
+                                        <option key={a} value={a}>
+                                            {a}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -484,10 +500,14 @@ export default function PostEditorPage() {
                             <label>Format</label>
                             <select
                                 value={imageFormat}
-                                onChange={(e) => setImageFormat(e.target.value as typeof imageFormat)}
+                                onChange={(e) =>
+                                    setImageFormat(e.target.value as typeof imageFormat)
+                                }
                             >
                                 {IMAGE_FORMATS.map((f) => (
-                                    <option key={f} value={f}>{f}</option>
+                                    <option key={f} value={f}>
+                                        {f}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -568,9 +588,7 @@ export default function PostEditorPage() {
                                             borderTop: "1px solid var(--border)",
                                         }}
                                     >
-                                        <span>
-                                            {new Date(s.scheduledAtUtc).toLocaleString()}
-                                        </span>
+                                        <span>{new Date(s.scheduledAtUtc).toLocaleString()}</span>
                                         <span className={`badge badge-${s.status}`}>
                                             {s.status}
                                         </span>
@@ -597,9 +615,7 @@ export default function PostEditorPage() {
                                 <tbody>
                                     {post.publishRuns.map((run) => (
                                         <tr key={run.id}>
-                                            <td>
-                                                {new Date(run.createdAt).toLocaleString()}
-                                            </td>
+                                            <td>{new Date(run.createdAt).toLocaleString()}</td>
                                             <td>{run.publisherProfile.name}</td>
                                             <td>
                                                 <span

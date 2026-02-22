@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import VoiceRecorder from "@/app/_components/VoiceRecorder";
 
 interface AppSettings {
     timezone: string;
     schedulerPollIntervalSec: number;
     defaultPublisherProfileId: string | null;
     maxPublishAttempts: number;
+    agentPromptInstructions: string;
 }
 
 interface PublisherProfile {
@@ -34,7 +36,7 @@ interface KBSearchResult {
     text: string;
 }
 
-type Tab = "general" | "n8n" | "knowledge";
+type Tab = "general" | "agent" | "n8n" | "knowledge";
 
 export default function SettingsPage() {
     const [tab, setTab] = useState<Tab>("general");
@@ -295,6 +297,12 @@ export default function SettingsPage() {
                     ⚙️ General
                 </button>
                 <button
+                    className={`tab ${tab === "agent" ? "active" : ""}`}
+                    onClick={() => setTab("agent")}
+                >
+                    🤖 AI Agent
+                </button>
+                <button
                     className={`tab ${tab === "n8n" ? "active" : ""}`}
                     onClick={() => setTab("n8n")}
                 >
@@ -392,6 +400,76 @@ export default function SettingsPage() {
                                 style={{ color: "var(--text-muted)", fontSize: 11, marginTop: 4 }}
                             >
                                 Used when no profile is selected on individual posts
+                            </small>
+                        </div>
+                        <button
+                            className="btn btn-primary"
+                            onClick={saveSettings}
+                            disabled={saving}
+                            style={{ marginTop: 8 }}
+                        >
+                            {saving ? (
+                                <span className="spinner" />
+                            ) : saveFlash ? (
+                                "✓ Saved!"
+                            ) : (
+                                "Save Settings"
+                            )}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── AI Agent ─── */}
+            {tab === "agent" && (
+                <div className="settings-section">
+                    <div className="card" style={{ maxWidth: 700 }}>
+                        <div className="card-header">
+                            <h3>🤖 Agent Prompt Instructions</h3>
+                        </div>
+                        <p
+                            style={{
+                                fontSize: 13,
+                                color: "var(--text-muted)",
+                                lineHeight: 1.6,
+                                margin: "0 0 16px",
+                            }}
+                        >
+                            Customize how the AI agent generates your posts. These instructions are
+                            appended to every draft and variant generation prompt, giving you
+                            control over tone, audience, formatting, and content preferences.
+                        </p>
+                        <div className="form-group">
+                            <label>Custom Instructions</label>
+                            <textarea
+                                value={settings.agentPromptInstructions}
+                                onChange={(e) =>
+                                    setSettings({
+                                        ...settings,
+                                        agentPromptInstructions: e.target.value,
+                                    })
+                                }
+                                rows={12}
+                                placeholder={`Example instructions:\n\n- Write in a casual, conversational tone\n- Target audience: software engineers and tech leads\n- Always include a personal anecdote or story\n- Keep posts under 1300 characters\n- Use emoji sparingly, only at the start of bullet points\n- End with a thought-provoking question\n- Avoid buzzwords like "synergy" and "leverage"\n- Write in first person`}
+                                style={{
+                                    width: "100%",
+                                    fontFamily: "inherit",
+                                    fontSize: 13,
+                                    lineHeight: 1.6,
+                                    resize: "vertical",
+                                    minHeight: 200,
+                                }}
+                            />
+                            <small
+                                style={{
+                                    color: "var(--text-muted)",
+                                    fontSize: 11,
+                                    marginTop: 4,
+                                    display: "block",
+                                }}
+                            >
+                                These instructions are included in every AI generation request. Be
+                                specific — the more detail you provide, the better the results.
                             </small>
                         </div>
                         <button
@@ -1148,11 +1226,23 @@ export default function SettingsPage() {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Content</label>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <label style={{ marginBottom: 0 }}>Content</label>
+                                    <VoiceRecorder
+                                        onTranscript={(text) => {
+                                            setKbTextContent((prev) =>
+                                                prev ? `${prev}\n${text}` : text
+                                            );
+                                            if (!kbTextTitle.trim()) {
+                                                setKbTextTitle("Voice Note");
+                                            }
+                                        }}
+                                    />
+                                </div>
                                 <textarea
                                     value={kbTextContent}
                                     onChange={(e) => setKbTextContent(e.target.value)}
-                                    placeholder="Paste your text content here..."
+                                    placeholder="Paste, type, or use 🎙️ to dictate..."
                                     rows={8}
                                     style={{ fontFamily: "inherit", fontSize: 13, lineHeight: 1.5 }}
                                 />

@@ -67,3 +67,6 @@ export const MODEL_IMAGE = "gpt-image-1";
 
 /** Model for text embeddings. */
 export const MODEL_EMBEDDING = "text-embedding-3-small";
+
+/** Model for speech-to-text transcription (Whisper). */
+export const MODEL_WHISPER = "whisper-1";
