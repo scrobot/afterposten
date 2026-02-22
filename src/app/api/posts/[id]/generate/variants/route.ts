@@ -21,7 +21,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         fetchVoiceContext(post.idea),
         getSettings(),
     ]);
-    const result = streamVariants(
+    const result = await streamVariants(
         post.idea,
         count,
         voiceContext,

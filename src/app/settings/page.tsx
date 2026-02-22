@@ -9,6 +9,9 @@ interface AppSettings {
     defaultPublisherProfileId: string | null;
     maxPublishAttempts: number;
     agentPromptInstructions: string;
+    hasOpenAIKey: boolean;
+    openaiKeyPreview: string | null;
+    openaiKeySource: "env" | "db" | null;
 }
 
 interface PublisherProfile {
@@ -76,6 +79,16 @@ export default function SettingsPage() {
     const [pingResults, setPingResults] = useState<
         Record<string, { success: boolean; message: string }>
     >({});
+
+    // API Key state
+    const [showKeyEdit, setShowKeyEdit] = useState(false);
+    const [newApiKey, setNewApiKey] = useState("");
+    const [keyValidating, setKeyValidating] = useState(false);
+    const [keySaving, setKeySaving] = useState(false);
+    const [keyMessage, setKeyMessage] = useState<{
+        type: "success" | "error";
+        text: string;
+    } | null>(null);
 
     const fetchData = useCallback(async () => {
         const [settingsRes, profilesRes] = await Promise.all([
@@ -319,6 +332,167 @@ export default function SettingsPage() {
             {/* ─── General Settings ─── */}
             {tab === "general" && (
                 <div className="settings-section">
+                    {/* API Keys Card */}
+                    <div className="card" style={{ maxWidth: 600, marginBottom: 20 }}>
+                        <div className="card-header">
+                            <h3>🔑 API Keys</h3>
+                        </div>
+                        <div className="form-group">
+                            <label>OpenAI API Key</label>
+                            {settings.hasOpenAIKey ? (
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <code
+                                        style={{
+                                            flex: 1,
+                                            padding: "8px 12px",
+                                            background: "var(--bg-input)",
+                                            borderRadius: 6,
+                                            fontSize: 13,
+                                        }}
+                                    >
+                                        {settings.openaiKeyPreview}
+                                    </code>
+                                    <span
+                                        style={{
+                                            fontSize: 10,
+                                            color: "var(--text-muted)",
+                                            background: "var(--bg-input)",
+                                            padding: "2px 8px",
+                                            borderRadius: 4,
+                                        }}
+                                    >
+                                        via {settings.openaiKeySource}
+                                    </span>
+                                    <button
+                                        className="btn btn-sm btn-secondary"
+                                        onClick={() => setShowKeyEdit(!showKeyEdit)}
+                                    >
+                                        {showKeyEdit ? "Cancel" : "Update"}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div
+                                    style={{
+                                        padding: "12px 16px",
+                                        background: "rgba(239, 68, 68, 0.1)",
+                                        border: "1px solid var(--danger, #ef4444)",
+                                        borderRadius: 8,
+                                        fontSize: 13,
+                                        color: "var(--danger, #ef4444)",
+                                    }}
+                                >
+                                    ⚠️ No API key configured — AI features will not work
+                                </div>
+                            )}
+                            {(showKeyEdit || !settings.hasOpenAIKey) && (
+                                <div style={{ marginTop: 8 }}>
+                                    <div style={{ display: "flex", gap: 8 }}>
+                                        <input
+                                            type="password"
+                                            value={newApiKey}
+                                            onChange={(e) => {
+                                                setNewApiKey(e.target.value);
+                                                setKeyMessage(null);
+                                            }}
+                                            placeholder="sk-proj-..."
+                                            style={{ flex: 1 }}
+                                        />
+                                        <button
+                                            className="btn btn-primary btn-sm"
+                                            disabled={
+                                                !newApiKey.trim() || keyValidating || keySaving
+                                            }
+                                            onClick={async () => {
+                                                setKeyValidating(true);
+                                                setKeyMessage(null);
+                                                try {
+                                                    const vRes = await fetch(
+                                                        "/api/settings/validate-key",
+                                                        {
+                                                            method: "POST",
+                                                            headers: {
+                                                                "Content-Type": "application/json",
+                                                            },
+                                                            body: JSON.stringify({
+                                                                apiKey: newApiKey.trim(),
+                                                            }),
+                                                        }
+                                                    );
+                                                    const vData = await vRes.json();
+                                                    if (!vData.valid) {
+                                                        setKeyMessage({
+                                                            type: "error",
+                                                            text: vData.error || "Invalid key",
+                                                        });
+                                                        return;
+                                                    }
+                                                    setKeySaving(true);
+                                                    await fetch("/api/settings", {
+                                                        method: "PUT",
+                                                        headers: {
+                                                            "Content-Type": "application/json",
+                                                        },
+                                                        body: JSON.stringify({
+                                                            openaiApiKey: newApiKey.trim(),
+                                                        }),
+                                                    });
+                                                    setKeyMessage({
+                                                        type: "success",
+                                                        text: "Key saved!",
+                                                    });
+                                                    setNewApiKey("");
+                                                    setShowKeyEdit(false);
+                                                    await fetchData();
+                                                } catch {
+                                                    setKeyMessage({
+                                                        type: "error",
+                                                        text: "Failed to save key",
+                                                    });
+                                                } finally {
+                                                    setKeyValidating(false);
+                                                    setKeySaving(false);
+                                                }
+                                            }}
+                                        >
+                                            {keyValidating || keySaving ? (
+                                                <span className="spinner" />
+                                            ) : (
+                                                "Validate & Save"
+                                            )}
+                                        </button>
+                                    </div>
+                                    {keyMessage && (
+                                        <div
+                                            style={{
+                                                fontSize: 12,
+                                                marginTop: 6,
+                                                color:
+                                                    keyMessage.type === "success"
+                                                        ? "var(--success, #22c55e)"
+                                                        : "var(--danger, #ef4444)",
+                                            }}
+                                        >
+                                            {keyMessage.type === "success" ? "✓" : "✗"}{" "}
+                                            {keyMessage.text}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            <small
+                                style={{
+                                    color: "var(--text-muted)",
+                                    fontSize: 11,
+                                    marginTop: 4,
+                                    display: "block",
+                                }}
+                            >
+                                Used for draft generation, image creation, embeddings, and
+                                speech-to-text
+                            </small>
+                        </div>
+                    </div>
+
+                    {/* Scheduler & Defaults Card */}
                     <div className="card" style={{ maxWidth: 600 }}>
                         <div className="card-header">
                             <h3>⚙️ Scheduler & Defaults</h3>

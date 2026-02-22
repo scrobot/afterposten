@@ -266,3 +266,9 @@ When you report progress in chat, include:
 - **Every** new feature or improvement **must** include corresponding documentation updates in the same commit/PR.
 - Update `README.md` (usage, feature list), `spec.md` (if requirements change), and any other relevant docs.
 - Documentation is not a follow-up task — it ships with the code.
+
+### Demo recording after new features
+
+- **Every** new feature or improvement **must** include an updated `docs/demo.webp` recording.
+- Record a browser session (using the `browser_subagent` tool) showcasing the current state of the application including the new feature.
+- This ensures the demo stays consistent and always reflects the latest UI and functionality.

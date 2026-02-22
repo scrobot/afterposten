@@ -25,7 +25,7 @@ async function getIndex(): Promise<LocalDocumentIndex> {
     if (!_index) {
         _index = new LocalDocumentIndex({
             folderPath: INDEX_PATH,
-            embeddings: getEmbeddingsInstance(),
+            embeddings: await getEmbeddingsInstance(),
             chunkingConfig: {
                 chunkSize: CHUNK_SIZE,
                 chunkOverlap: CHUNK_OVERLAP,

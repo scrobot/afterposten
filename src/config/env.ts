@@ -1,21 +1,23 @@
-/** Centralized environment configuration — one import to rule them all. */
-
-function required(name: string): string {
-    const val = process.env[name];
-    if (!val) {
-        throw new Error(`Missing required environment variable: ${name}`);
-    }
-    return val;
-}
+/**
+ * Centralized environment configuration — one import to rule them all.
+ *
+ * For runtime secrets (OpenAI key), use `resolveOpenAIKey()` from config-store.ts.
+ * This module handles non-async env lookups and the encryption key lifecycle.
+ */
+import { resolveEncryptionKey } from "./encryption-key";
 
 function optional(name: string, fallback: string = ""): string {
     return process.env[name] ?? fallback;
 }
 
 export const env = {
-    /** OpenAI API key for text + image generation */
+    /**
+     * OpenAI API key — sync getter for backward compatibility.
+     * Returns the env var if set, or empty string.
+     * For async resolution (env → DB fallback), use `resolveOpenAIKey()` from config-store.ts.
+     */
     get OPENAI_API_KEY(): string {
-        return required("OPENAI_API_KEY");
+        return optional("OPENAI_API_KEY");
     },
 
     /** SQLite database URL */
@@ -23,9 +25,12 @@ export const env = {
         return optional("DATABASE_URL", "file:./dev.db");
     },
 
-    /** Encryption key for sensitive publisher profile fields (32-byte hex string) */
+    /**
+     * Encryption key for sensitive publisher profile fields (32-byte hex string).
+     * Auto-generated on first launch if not in env.
+     */
     get ENCRYPTION_KEY(): string {
-        return required("ENCRYPTION_KEY");
+        return resolveEncryptionKey();
     },
 
     /** Node environment */

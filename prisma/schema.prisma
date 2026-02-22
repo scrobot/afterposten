@@ -115,6 +115,8 @@ model AppSettings {
   defaultPublisherProfileId String? @map("default_publisher_profile_id")
   maxPublishAttempts        Int     @default(5) @map("max_publish_attempts")
   agentPromptInstructions   String  @default("") @map("agent_prompt_instructions")
+  openaiApiKeyEnc           String? @map("openai_api_key_enc")
+  setupCompleted            Boolean @default(false) @map("setup_completed")
 
   defaultPublisherProfile PublisherProfile? @relation("DefaultPublisherProfile", fields: [defaultPublisherProfileId], references: [id], onDelete: SetNull)
 

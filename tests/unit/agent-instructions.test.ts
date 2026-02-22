@@ -12,7 +12,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // ─── Mock the AI SDK before any imports ────────────────────────
 vi.mock("@ai-sdk/openai", () => ({
-    openai: vi.fn(() => "mocked-model"),
+    createOpenAI: vi.fn(() => vi.fn(() => "mocked-model")),
 }));
 
 vi.mock("ai", () => ({
@@ -29,6 +29,11 @@ vi.mock("ai", () => ({
             },
         })
     ),
+}));
+
+// ─── Mock the config store to provide a fake API key ───────────
+vi.mock("@/config/config-store", () => ({
+    resolveOpenAIKey: vi.fn(() => Promise.resolve("sk-test-fake-key-for-testing")),
 }));
 
 // ─── buildInstructionsBlock ────────────────────────────────────
@@ -86,8 +91,8 @@ describe("streamDraft agent instructions", () => {
         streamObject = aiMod.streamObject as ReturnType<typeof vi.fn>;
     });
 
-    it("includes agent instructions in the prompt when provided", () => {
-        streamDraft("test idea", null, "Write in Russian");
+    it("includes agent instructions in the prompt when provided", async () => {
+        await streamDraft("test idea", null, "Write in Russian");
 
         expect(streamObject).toHaveBeenCalledTimes(1);
         const callArgs = streamObject.mock.calls[0][0];
@@ -95,24 +100,24 @@ describe("streamDraft agent instructions", () => {
         expect(callArgs.prompt).toContain("Write in Russian");
     });
 
-    it("does not include instructions block when null", () => {
-        streamDraft("test idea", null, null);
+    it("does not include instructions block when null", async () => {
+        await streamDraft("test idea", null, null);
 
         expect(streamObject).toHaveBeenCalledTimes(1);
         const callArgs = streamObject.mock.calls[0][0];
         expect(callArgs.prompt).not.toContain("Additional instructions from the user:");
     });
 
-    it("does not include instructions block when empty string", () => {
-        streamDraft("test idea", null, "");
+    it("does not include instructions block when empty string", async () => {
+        await streamDraft("test idea", null, "");
 
         expect(streamObject).toHaveBeenCalledTimes(1);
         const callArgs = streamObject.mock.calls[0][0];
         expect(callArgs.prompt).not.toContain("Additional instructions from the user:");
     });
 
-    it("includes both voice context and agent instructions when both provided", () => {
-        streamDraft("test idea", "Brand voice data", "Keep it under 500 chars");
+    it("includes both voice context and agent instructions when both provided", async () => {
+        await streamDraft("test idea", "Brand voice data", "Keep it under 500 chars");
 
         expect(streamObject).toHaveBeenCalledTimes(1);
         const callArgs = streamObject.mock.calls[0][0];
@@ -122,8 +127,8 @@ describe("streamDraft agent instructions", () => {
         expect(callArgs.prompt).toContain("Keep it under 500 chars");
     });
 
-    it("works with only voice context and no agent instructions", () => {
-        streamDraft("test idea", "Some voice context");
+    it("works with only voice context and no agent instructions", async () => {
+        await streamDraft("test idea", "Some voice context");
 
         expect(streamObject).toHaveBeenCalledTimes(1);
         const callArgs = streamObject.mock.calls[0][0];
@@ -145,8 +150,8 @@ describe("streamVariants agent instructions", () => {
         streamObject = aiMod.streamObject as ReturnType<typeof vi.fn>;
     });
 
-    it("includes agent instructions in the variants prompt", () => {
-        streamVariants("test idea", 3, null, "Use formal academic tone");
+    it("includes agent instructions in the variants prompt", async () => {
+        await streamVariants("test idea", 3, null, "Use formal academic tone");
 
         expect(streamObject).toHaveBeenCalledTimes(1);
         const callArgs = streamObject.mock.calls[0][0];
@@ -154,8 +159,8 @@ describe("streamVariants agent instructions", () => {
         expect(callArgs.prompt).toContain("Use formal academic tone");
     });
 
-    it("does not include instructions when not provided", () => {
-        streamVariants("test idea", 3, null, null);
+    it("does not include instructions when not provided", async () => {
+        await streamVariants("test idea", 3, null, null);
 
         expect(streamObject).toHaveBeenCalledTimes(1);
         const callArgs = streamObject.mock.calls[0][0];

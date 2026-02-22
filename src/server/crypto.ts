@@ -1,11 +1,11 @@
 import crypto from "node:crypto";
-import { env } from "@/config/env";
+import { resolveEncryptionKey } from "@/config/encryption-key";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 
 function getKey(): Buffer {
-    const hex = env.ENCRYPTION_KEY;
+    const hex = resolveEncryptionKey();
     if (hex.length !== 64) {
         throw new Error(
             "ENCRYPTION_KEY must be a 64-char hex string (32 bytes). Generate: openssl rand -hex 32"

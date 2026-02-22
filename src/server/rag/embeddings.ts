@@ -4,15 +4,23 @@
  */
 import { OpenAI } from "openai";
 import { OpenAIEmbeddings } from "vectra";
-import { env } from "@/config/env";
+import { resolveOpenAIKey } from "@/config/config-store";
 import { MODEL_EMBEDDING, MAX_EMBEDDING_TOKENS } from "@/config/constants";
 
 let _openai: OpenAI | null = null;
-function getOpenAI(): OpenAI {
+async function getOpenAI(): Promise<OpenAI> {
     if (!_openai) {
-        _openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+        const apiKey = await resolveOpenAIKey();
+        if (!apiKey) throw new Error("OpenAI API key not configured");
+        _openai = new OpenAI({ apiKey });
     }
     return _openai;
+}
+
+/** Reset cached clients — called when API key is updated. */
+export function resetEmbeddingsClients(): void {
+    _openai = null;
+    _embeddings = null;
 }
 
 /**
@@ -20,7 +28,9 @@ function getOpenAI(): OpenAI {
  * Used by LocalIndex (posts).
  */
 export async function getVector(text: string): Promise<number[]> {
-    const resp = await getOpenAI().embeddings.create({
+    const resp = await (
+        await getOpenAI()
+    ).embeddings.create({
         model: MODEL_EMBEDDING,
         input: text,
     });
@@ -32,10 +42,12 @@ export async function getVector(text: string): Promise<number[]> {
  * Vectra handles batching internally.
  */
 let _embeddings: OpenAIEmbeddings | null = null;
-export function getEmbeddingsInstance(): OpenAIEmbeddings {
+export async function getEmbeddingsInstance(): Promise<OpenAIEmbeddings> {
     if (!_embeddings) {
+        const apiKey = await resolveOpenAIKey();
+        if (!apiKey) throw new Error("OpenAI API key not configured");
         _embeddings = new OpenAIEmbeddings({
-            apiKey: env.OPENAI_API_KEY,
+            apiKey,
             model: MODEL_EMBEDDING,
             maxTokens: MAX_EMBEDDING_TOKENS,
         });

@@ -21,7 +21,11 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     ]);
 
     // Stream the draft using Vercel AI SDK
-    const result = streamDraft(post.idea, voiceContext, settings.agentPromptInstructions || null);
+    const result = await streamDraft(
+        post.idea,
+        voiceContext,
+        settings.agentPromptInstructions || null
+    );
 
     // Save the completed draft to DB after streaming finishes
     result.object

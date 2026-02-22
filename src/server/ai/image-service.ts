@@ -1,18 +1,30 @@
 import OpenAI from "openai";
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { v4 as uuidv4 } from "uuid";
 import type { ImageRequest, AltTextOutput } from "@/shared/types";
 import { altTextOutputSchema } from "@/shared/types";
-import { env } from "@/config/env";
+import { resolveOpenAIKey } from "@/config/config-store";
 import { MODEL_IMAGE, MODEL_TEXT_PRIMARY } from "@/config/constants";
 
 const ASSETS_DIR = path.join(process.cwd(), "public", "assets");
 
-function getOpenAIClient() {
-    return new OpenAI({ apiKey: env.OPENAI_API_KEY });
+let _client: OpenAI | null = null;
+
+async function getOpenAIClient(): Promise<OpenAI> {
+    if (!_client) {
+        const apiKey = await resolveOpenAIKey();
+        if (!apiKey) throw new Error("OpenAI API key not configured");
+        _client = new OpenAI({ apiKey });
+    }
+    return _client;
+}
+
+/** Reset cached client — called when API key is updated. */
+export function resetOpenAIClient(): void {
+    _client = null;
 }
 
 async function ensureAssetsDir() {
@@ -62,7 +74,7 @@ export async function generateImage(
 ): Promise<{ filePath: string; publicPath: string; metaJson: string }> {
     await ensureAssetsDir();
 
-    const client = getOpenAIClient();
+    const client = await getOpenAIClient();
     const styleModifier = getStylePromptModifier(request.stylePreset);
     const fullPrompt = `${styleModifier}\n\nSubject: ${request.prompt}`;
     const size = getImageSize(request.aspect);
@@ -107,8 +119,12 @@ export async function generateAltText(
     imagePath: string,
     postContext: string
 ): Promise<AltTextOutput> {
+    const apiKey = await resolveOpenAIKey();
+    if (!apiKey) throw new Error("OpenAI API key not configured");
+    const provider = createOpenAI({ apiKey });
+
     const result = await generateObject({
-        model: openai(MODEL_TEXT_PRIMARY),
+        model: provider(MODEL_TEXT_PRIMARY),
         schema: altTextOutputSchema,
         messages: [
             {
