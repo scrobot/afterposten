@@ -21,12 +21,16 @@ interface PublisherProfile {
     hasBearerToken: boolean;
 }
 
+type Tab = "general" | "n8n";
+
 export default function SettingsPage() {
-    const [tab, setTab] = useState<"general" | "publishers">("general");
+    const [tab, setTab] = useState<Tab>("general");
     const [settings, setSettings] = useState<AppSettings | null>(null);
     const [profiles, setProfiles] = useState<PublisherProfile[]>([]);
     const [saving, setSaving] = useState(false);
+    const [saveFlash, setSaveFlash] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
+    const [blueprintCopied, setBlueprintCopied] = useState(false);
 
     // Profile form
     const [profileForm, setProfileForm] = useState({
@@ -41,7 +45,7 @@ export default function SettingsPage() {
     });
     const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
     const [testingPing, setTestingPing] = useState<string | null>(null);
-    const [pingResult, setPingResult] = useState<string | null>(null);
+    const [pingResults, setPingResults] = useState<Record<string, { success: boolean; message: string }>>({});
 
     const fetchData = useCallback(async () => {
         const [settingsRes, profilesRes] = await Promise.all([
@@ -65,6 +69,8 @@ export default function SettingsPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(settings),
             });
+            setSaveFlash(true);
+            setTimeout(() => setSaveFlash(false), 2000);
         } finally {
             setSaving(false);
         }
@@ -127,19 +133,30 @@ export default function SettingsPage() {
 
     const testPing = async (id: string) => {
         setTestingPing(id);
-        setPingResult(null);
         try {
             const res = await fetch(`/api/publishers/${id}/test-ping`, {
                 method: "POST",
             });
             const data = await res.json();
-            setPingResult(
-                data.success ? `✅ ${data.message}` : `❌ ${data.message}`
-            );
+            setPingResults((prev) => ({
+                ...prev,
+                [id]: { success: data.success, message: data.message },
+            }));
         } catch {
-            setPingResult("❌ Connection failed");
+            setPingResults((prev) => ({
+                ...prev,
+                [id]: { success: false, message: "Connection failed" },
+            }));
         } finally {
             setTestingPing(null);
+        }
+    };
+
+    const getAuthLabel = (type: string) => {
+        switch (type) {
+            case "header": return "Custom Header";
+            case "bearer": return "Bearer Token";
+            default: return "No Auth";
         }
     };
 
@@ -162,20 +179,23 @@ export default function SettingsPage() {
                     className={`tab ${tab === "general" ? "active" : ""}`}
                     onClick={() => setTab("general")}
                 >
-                    General
+                    ⚙️ General
                 </button>
                 <button
-                    className={`tab ${tab === "publishers" ? "active" : ""}`}
-                    onClick={() => setTab("publishers")}
+                    className={`tab ${tab === "n8n" ? "active" : ""}`}
+                    onClick={() => setTab("n8n")}
                 >
-                    Publisher Profiles
+                    🔌 n8n Integration
                 </button>
             </div>
 
-            {/* General Settings */}
+            {/* ─── General Settings ─── */}
             {tab === "general" && (
                 <div className="settings-section">
                     <div className="card" style={{ maxWidth: 600 }}>
+                        <div className="card-header">
+                            <h3>⚙️ Scheduler & Defaults</h3>
+                        </div>
                         <div className="form-group">
                             <label>Timezone</label>
                             <input
@@ -186,6 +206,9 @@ export default function SettingsPage() {
                                 }
                                 placeholder="e.g. Europe/Belgrade"
                             />
+                            <small style={{ color: "var(--text-muted)", fontSize: 11, marginTop: 4 }}>
+                                IANA timezone name — used to convert your scheduled times to UTC
+                            </small>
                         </div>
                         <div className="form-group">
                             <label>Scheduler Poll Interval (seconds)</label>
@@ -200,6 +223,9 @@ export default function SettingsPage() {
                                     })
                                 }
                             />
+                            <small style={{ color: "var(--text-muted)", fontSize: 11, marginTop: 4 }}>
+                                How often the scheduler checks for due posts
+                            </small>
                         </div>
                         <div className="form-group">
                             <label>Max Publish Attempts</label>
@@ -215,6 +241,9 @@ export default function SettingsPage() {
                                     })
                                 }
                             />
+                            <small style={{ color: "var(--text-muted)", fontSize: 11, marginTop: 4 }}>
+                                After this many failures, a post is marked as permanently failed
+                            </small>
                         </div>
                         <div className="form-group">
                             <label>Default Publisher Profile</label>
@@ -234,208 +263,445 @@ export default function SettingsPage() {
                                     </option>
                                 ))}
                             </select>
+                            <small style={{ color: "var(--text-muted)", fontSize: 11, marginTop: 4 }}>
+                                Used when no profile is selected on individual posts
+                            </small>
                         </div>
                         <button
                             className="btn btn-primary"
                             onClick={saveSettings}
                             disabled={saving}
+                            style={{ marginTop: 8 }}
                         >
-                            {saving ? <span className="spinner" /> : "Save Settings"}
+                            {saving ? <span className="spinner" /> : saveFlash ? "✓ Saved!" : "Save Settings"}
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* Publisher Profiles */}
-            {tab === "publishers" && (
+            {/* ─── n8n Integration ─── */}
+            {tab === "n8n" && (
                 <div className="settings-section">
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-                        <button className="btn btn-primary" onClick={openCreateProfile}>
-                            + Add Profile
-                        </button>
+                    {/* n8n Workflow Blueprint */}
+                    <div className="card" style={{ marginBottom: 20 }}>
+                        <div className="card-header">
+                            <h3>📦 n8n Workflow Blueprint</h3>
+                            <div style={{ display: "flex", gap: 8 }}>
+                                <button
+                                    className="btn btn-sm btn-secondary"
+                                    onClick={async () => {
+                                        const res = await fetch("/n8n-workflow-blueprint.json");
+                                        const json = await res.text();
+                                        await navigator.clipboard.writeText(json);
+                                        setBlueprintCopied(true);
+                                        setTimeout(() => setBlueprintCopied(false), 2000);
+                                    }}
+                                >
+                                    {blueprintCopied ? "✓ Copied!" : "📋 Copy JSON"}
+                                </button>
+                                <a
+                                    href="/n8n-workflow-blueprint.json"
+                                    download="post-studio-n8n-workflow.json"
+                                    className="btn btn-sm btn-secondary"
+                                    style={{ textDecoration: "none" }}
+                                >
+                                    ⬇️ Download
+                                </a>
+                            </div>
+                        </div>
+                        <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "4px 0 12px", lineHeight: 1.5 }}>
+                            Import this ready-made workflow into n8n to get started instantly.
+                            It includes a Webhook trigger, field extraction, image detection, and a success response.
+                        </p>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
+                            <div style={{ padding: "10px 14px", background: "var(--bg-input)", borderRadius: 8, textAlign: "center" }}>
+                                <div style={{ fontSize: 22 }}>🔗</div>
+                                <strong style={{ fontSize: 11 }}>Webhook</strong>
+                                <p style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>POST trigger</p>
+                            </div>
+                            <div style={{ padding: "10px 14px", background: "var(--bg-input)", borderRadius: 8, textAlign: "center" }}>
+                                <div style={{ fontSize: 22 }}>📦</div>
+                                <strong style={{ fontSize: 11 }}>Extract</strong>
+                                <p style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>Parse fields</p>
+                            </div>
+                            <div style={{ padding: "10px 14px", background: "var(--bg-input)", borderRadius: 8, textAlign: "center" }}>
+                                <div style={{ fontSize: 22 }}>🖼️</div>
+                                <strong style={{ fontSize: 11 }}>Image?</strong>
+                                <p style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>Check binary</p>
+                            </div>
+                            <div style={{ padding: "10px 14px", background: "var(--bg-input)", borderRadius: 8, textAlign: "center" }}>
+                                <div style={{ fontSize: 22 }}>✅</div>
+                                <strong style={{ fontSize: 11 }}>Respond</strong>
+                                <p style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>Success JSON</p>
+                            </div>
+                        </div>
+                        <details style={{ marginTop: 12 }}>
+                            <summary style={{ fontSize: 12, fontWeight: 600, cursor: "pointer", color: "var(--accent)", padding: "4px 0" }}>
+                                How to import into n8n
+                            </summary>
+                            <ol style={{ margin: "8px 0 0", paddingLeft: 20, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.8 }}>
+                                <li>Copy the JSON above or download the file</li>
+                                <li>Open n8n → <strong>Workflows</strong> → <strong>+ Add Workflow</strong></li>
+                                <li>Click the <strong>⋯</strong> menu → <strong>Import from JSON</strong></li>
+                                <li>Paste or upload the workflow JSON</li>
+                                <li>Click <strong>Save</strong>, then <strong>Activate</strong> the workflow</li>
+                                <li>Copy the <strong>Production Webhook URL</strong> from the Webhook node</li>
+                                <li>Paste it into a Publisher Profile below</li>
+                            </ol>
+                        </details>
                     </div>
 
-                    {profiles.length === 0 ? (
-                        <div className="empty-state">
-                            <h3>No publisher profiles</h3>
-                            <p>Create a publisher profile to connect to your n8n webhook.</p>
+                    {/* Setup Guide */}
+                    <div className="card" style={{ marginBottom: 20, borderColor: "var(--accent)", borderWidth: 1, borderStyle: "solid" }}>
+                        <div className="card-header">
+                            <h3>🚀 Setup Steps</h3>
                         </div>
-                    ) : (
-                        profiles.map((p) => (
-                            <div key={p.id} className="profile-card">
-                                <div className="profile-card-info">
-                                    <h4>{p.name}</h4>
-                                    <p>
-                                        {p.webhookUrl} · Auth: {p.authType} · Field: {p.binaryFieldName}
-                                    </p>
-                                </div>
-                                <div className="profile-card-actions">
-                                    <button
-                                        className="btn btn-sm btn-secondary"
-                                        onClick={() => testPing(p.id)}
-                                        disabled={testingPing === p.id}
-                                    >
-                                        {testingPing === p.id ? (
-                                            <span className="spinner" />
-                                        ) : (
-                                            "🔔 Test Ping"
-                                        )}
-                                    </button>
-                                    <button
-                                        className="btn btn-sm btn-secondary"
-                                        onClick={() => openEditProfile(p)}
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        className="btn btn-sm btn-danger"
-                                        onClick={() => deleteProfile(p.id)}
-                                    >
-                                        Delete
-                                    </button>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginTop: 8 }}>
+                            <div style={{ padding: "12px 16px", background: "var(--bg-input)", borderRadius: 10, textAlign: "center" }}>
+                                <div style={{ fontSize: 28, marginBottom: 6 }}>1️⃣</div>
+                                <strong style={{ fontSize: 13 }}>Import Blueprint</strong>
+                                <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4, lineHeight: 1.4 }}>
+                                    Copy the workflow JSON above and import it into n8n, then activate it
+                                </p>
+                            </div>
+                            <div style={{ padding: "12px 16px", background: "var(--bg-input)", borderRadius: 10, textAlign: "center" }}>
+                                <div style={{ fontSize: 28, marginBottom: 6 }}>2️⃣</div>
+                                <strong style={{ fontSize: 13 }}>Add Profile Below</strong>
+                                <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4, lineHeight: 1.4 }}>
+                                    Paste the webhook URL, configure auth, and set the binary field name for images
+                                </p>
+                            </div>
+                            <div style={{ padding: "12px 16px", background: "var(--bg-input)", borderRadius: 10, textAlign: "center" }}>
+                                <div style={{ fontSize: 28, marginBottom: 6 }}>3️⃣</div>
+                                <strong style={{ fontSize: 13 }}>Test Connection</strong>
+                                <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4, lineHeight: 1.4 }}>
+                                    Hit &quot;Test Ping&quot; to verify connectivity before scheduling any posts
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Payload reference */}
+                        <details style={{ marginTop: 16 }}>
+                            <summary style={{ fontSize: 12, fontWeight: 600, cursor: "pointer", color: "var(--accent)", padding: "4px 0" }}>
+                                📋 Webhook payload reference
+                            </summary>
+                            <div style={{ marginTop: 8, padding: "10px 14px", background: "var(--bg-input)", borderRadius: 8, fontSize: 12, fontFamily: "monospace", lineHeight: 1.6 }}>
+                                <div><span style={{ color: "var(--accent)" }}>text</span> — Final post text (string)</div>
+                                <div><span style={{ color: "var(--accent)" }}>hashtags</span> — JSON array of hashtag strings</div>
+                                <div><span style={{ color: "var(--accent)" }}>postId</span> — Unique post reference UUID</div>
+                                <div><span style={{ color: "var(--accent)" }}>scheduledAt</span> — ISO 8601 datetime with timezone</div>
+                                <div><span style={{ color: "var(--accent)" }}>profileName</span> — Publisher profile name</div>
+                                <div><span style={{ color: "var(--accent)" }}>mediaFile</span> — Binary image file (configurable field name)</div>
+                                <div style={{ marginTop: 6, color: "var(--text-muted)" }}>
+                                    + Any extra fields you configure per profile
                                 </div>
                             </div>
-                        ))
-                    )}
+                        </details>
+                    </div>
 
-                    {pingResult && (
-                        <div
-                            style={{
-                                marginTop: 12,
-                                padding: 10,
-                                borderRadius: 8,
-                                background: "var(--bg-input)",
-                                fontSize: 13,
-                            }}
-                        >
-                            {pingResult}
+                    {/* Profiles Header */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                        <h3 style={{ margin: 0, fontSize: 15 }}>
+                            Publisher Profiles
+                            <span style={{ color: "var(--text-muted)", fontWeight: 400, marginLeft: 8, fontSize: 12 }}>
+                                ({profiles.length})
+                            </span>
+                        </h3>
+                        <button className="btn btn-primary" onClick={openCreateProfile}>
+                            + New Profile
+                        </button>
+                    </div>
+
+                    {/* Profile Cards */}
+                    {profiles.length === 0 ? (
+                        <div className="card" style={{ textAlign: "center", padding: "40px 20px" }}>
+                            <div style={{ fontSize: 48, marginBottom: 12 }}>🔌</div>
+                            <h3 style={{ marginBottom: 6, fontWeight: 600 }}>No profiles yet</h3>
+                            <p style={{ color: "var(--text-muted)", fontSize: 13, maxWidth: 360, margin: "0 auto", lineHeight: 1.5 }}>
+                                Create a publisher profile to connect Post Studio to your n8n webhook workflow.
+                            </p>
+                            <button
+                                className="btn btn-primary"
+                                onClick={openCreateProfile}
+                                style={{ marginTop: 16 }}
+                            >
+                                + Create First Profile
+                            </button>
+                        </div>
+                    ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                            {profiles.map((p) => {
+                                const ping = pingResults[p.id];
+                                const isTesting = testingPing === p.id;
+                                const isDefault = settings.defaultPublisherProfileId === p.id;
+
+                                return (
+                                    <div
+                                        key={p.id}
+                                        className="card"
+                                        style={{
+                                            ...(isDefault ? { borderColor: "var(--accent)", borderWidth: 1, borderStyle: "solid" } : {}),
+                                        }}
+                                    >
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+                                            {/* Left: Profile info */}
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                                                    <h4 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>{p.name}</h4>
+                                                    {isDefault && (
+                                                        <span className="badge badge-published" style={{ fontSize: 10 }}>
+                                                            Default
+                                                        </span>
+                                                    )}
+                                                    {ping && (
+                                                        <span
+                                                            className={`badge ${ping.success ? "badge-published" : "badge-failed"}`}
+                                                            style={{ fontSize: 10 }}
+                                                        >
+                                                            {ping.success ? "Connected" : "Failed"}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "4px 12px", fontSize: 12, color: "var(--text-muted)" }}>
+                                                    <span style={{ fontWeight: 500 }}>URL:</span>
+                                                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "monospace", fontSize: 11 }}>
+                                                        {p.webhookUrl}
+                                                    </span>
+                                                    <span style={{ fontWeight: 500 }}>Auth:</span>
+                                                    <span>
+                                                        {getAuthLabel(p.authType)}
+                                                        {p.authType === "header" && p.authHeaderName && (
+                                                            <span style={{ fontFamily: "monospace", marginLeft: 4 }}>({p.authHeaderName})</span>
+                                                        )}
+                                                    </span>
+                                                    <span style={{ fontWeight: 500 }}>Image Field:</span>
+                                                    <span style={{ fontFamily: "monospace" }}>{p.binaryFieldName}</span>
+                                                </div>
+
+                                                {/* Ping result message */}
+                                                {ping && (
+                                                    <div style={{
+                                                        marginTop: 8,
+                                                        padding: "6px 10px",
+                                                        borderRadius: 6,
+                                                        fontSize: 11,
+                                                        background: ping.success ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                                                        color: ping.success ? "#22c55e" : "#ef4444",
+                                                    }}>
+                                                        {ping.success ? "✅" : "❌"} {ping.message}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Right: Actions */}
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
+                                                <button
+                                                    className="btn btn-sm btn-secondary"
+                                                    onClick={() => testPing(p.id)}
+                                                    disabled={isTesting}
+                                                    style={{ minWidth: 100 }}
+                                                >
+                                                    {isTesting ? (
+                                                        <span className="spinner" />
+                                                    ) : (
+                                                        "🔔 Test Ping"
+                                                    )}
+                                                </button>
+                                                <button
+                                                    className="btn btn-sm btn-secondary"
+                                                    onClick={() => openEditProfile(p)}
+                                                    style={{ minWidth: 100 }}
+                                                >
+                                                    ✏️ Edit
+                                                </button>
+                                                <button
+                                                    className="btn btn-sm btn-danger"
+                                                    onClick={() => deleteProfile(p.id)}
+                                                    style={{ minWidth: 100 }}
+                                                >
+                                                    🗑 Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
             )}
 
-            {/* Profile Modal */}
+            {/* ─── Profile Modal ─── */}
             {showProfileModal && (
                 <div className="modal-overlay" onClick={() => setShowProfileModal(false)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <h2>
-                            {editingProfileId ? "Edit Profile" : "New Publisher Profile"}
+                    <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+                        <h2 style={{ marginBottom: 4 }}>
+                            {editingProfileId ? "✏️ Edit Profile" : "🔌 New Publisher Profile"}
                         </h2>
+                        <p style={{ color: "var(--text-muted)", fontSize: 12, marginBottom: 16 }}>
+                            {editingProfileId
+                                ? "Update the webhook connection settings"
+                                : "Connect a new n8n webhook workflow for publishing posts"
+                            }
+                        </p>
 
-                        <div className="form-group">
-                            <label>Name</label>
-                            <input
-                                type="text"
-                                value={profileForm.name}
-                                onChange={(e) =>
-                                    setProfileForm({ ...profileForm, name: e.target.value })
-                                }
-                                placeholder="e.g. Production, Staging"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Webhook URL</label>
-                            <input
-                                type="url"
-                                value={profileForm.webhookUrl}
-                                onChange={(e) =>
-                                    setProfileForm({ ...profileForm, webhookUrl: e.target.value })
-                                }
-                                placeholder="https://n8n.example.com/webhook/..."
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Auth Type</label>
-                            <select
-                                value={profileForm.authType}
-                                onChange={(e) =>
-                                    setProfileForm({ ...profileForm, authType: e.target.value })
-                                }
-                            >
-                                <option value="none">None</option>
-                                <option value="header">Custom Header</option>
-                                <option value="bearer">Bearer Token</option>
-                            </select>
-                        </div>
+                        {/* Connection */}
+                        <fieldset style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
+                            <legend style={{ fontSize: 12, fontWeight: 600, padding: "0 8px", color: "var(--accent)" }}>
+                                Connection
+                            </legend>
+                            <div className="form-group">
+                                <label>Profile Name</label>
+                                <input
+                                    type="text"
+                                    value={profileForm.name}
+                                    onChange={(e) =>
+                                        setProfileForm({ ...profileForm, name: e.target.value })
+                                    }
+                                    placeholder="e.g. Production LinkedIn, Staging Test"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Webhook URL</label>
+                                <input
+                                    type="url"
+                                    value={profileForm.webhookUrl}
+                                    onChange={(e) =>
+                                        setProfileForm({ ...profileForm, webhookUrl: e.target.value })
+                                    }
+                                    placeholder="https://n8n.example.com/webhook/abc-123"
+                                />
+                                <small style={{ color: "var(--text-muted)", fontSize: 11 }}>
+                                    Copy this from your n8n Webhook node&apos;s production URL
+                                </small>
+                            </div>
+                        </fieldset>
 
-                        {profileForm.authType === "header" && (
-                            <>
+                        {/* Authentication */}
+                        <fieldset style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
+                            <legend style={{ fontSize: 12, fontWeight: 600, padding: "0 8px", color: "var(--accent)" }}>
+                                Authentication
+                            </legend>
+                            <div className="form-group">
+                                <label>Auth Type</label>
+                                <select
+                                    value={profileForm.authType}
+                                    onChange={(e) =>
+                                        setProfileForm({ ...profileForm, authType: e.target.value })
+                                    }
+                                >
+                                    <option value="none">None (local n8n only)</option>
+                                    <option value="header">Custom Header</option>
+                                    <option value="bearer">Bearer Token</option>
+                                </select>
+                            </div>
+
+                            {profileForm.authType === "header" && (
+                                <>
+                                    <div className="form-group">
+                                        <label>Header Name</label>
+                                        <input
+                                            type="text"
+                                            value={profileForm.authHeaderName}
+                                            onChange={(e) =>
+                                                setProfileForm({
+                                                    ...profileForm,
+                                                    authHeaderName: e.target.value,
+                                                })
+                                            }
+                                            placeholder="X-Auth-Key"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Header Value</label>
+                                        <input
+                                            type="password"
+                                            value={profileForm.authHeaderValue}
+                                            onChange={(e) =>
+                                                setProfileForm({
+                                                    ...profileForm,
+                                                    authHeaderValue: e.target.value,
+                                                })
+                                            }
+                                            placeholder={editingProfileId ? "Leave empty to keep existing" : "Enter secret value"}
+                                        />
+                                        <small style={{ color: "var(--text-muted)", fontSize: 11 }}>
+                                            🔒 Encrypted at rest with AES-256-GCM
+                                        </small>
+                                    </div>
+                                </>
+                            )}
+
+                            {profileForm.authType === "bearer" && (
                                 <div className="form-group">
-                                    <label>Header Name</label>
-                                    <input
-                                        type="text"
-                                        value={profileForm.authHeaderName}
-                                        onChange={(e) =>
-                                            setProfileForm({
-                                                ...profileForm,
-                                                authHeaderName: e.target.value,
-                                            })
-                                        }
-                                        placeholder="X-Auth-Key"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label>Header Value</label>
+                                    <label>Bearer Token</label>
                                     <input
                                         type="password"
-                                        value={profileForm.authHeaderValue}
+                                        value={profileForm.bearerToken}
                                         onChange={(e) =>
                                             setProfileForm({
                                                 ...profileForm,
-                                                authHeaderValue: e.target.value,
+                                                bearerToken: e.target.value,
                                             })
                                         }
-                                        placeholder="Enter value (leave empty to keep existing)"
+                                        placeholder={editingProfileId ? "Leave empty to keep existing" : "Enter bearer token"}
                                     />
+                                    <small style={{ color: "var(--text-muted)", fontSize: 11 }}>
+                                        🔒 Encrypted at rest with AES-256-GCM
+                                    </small>
                                 </div>
-                            </>
-                        )}
+                            )}
 
-                        {profileForm.authType === "bearer" && (
+                            {profileForm.authType === "none" && (
+                                <p style={{ fontSize: 11, color: "var(--text-muted)", margin: "4px 0 0", lineHeight: 1.4 }}>
+                                    ⚠️ Only recommended for local n8n instances not exposed to the internet
+                                </p>
+                            )}
+                        </fieldset>
+
+                        {/* Advanced */}
+                        <fieldset style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
+                            <legend style={{ fontSize: 12, fontWeight: 600, padding: "0 8px", color: "var(--text-muted)" }}>
+                                Advanced
+                            </legend>
                             <div className="form-group">
-                                <label>Bearer Token</label>
+                                <label>Binary Field Name</label>
                                 <input
-                                    type="password"
-                                    value={profileForm.bearerToken}
+                                    type="text"
+                                    value={profileForm.binaryFieldName}
                                     onChange={(e) =>
                                         setProfileForm({
                                             ...profileForm,
-                                            bearerToken: e.target.value,
+                                            binaryFieldName: e.target.value,
                                         })
                                     }
-                                    placeholder="Enter token (leave empty to keep existing)"
+                                    placeholder="mediaFile"
                                 />
+                                <small style={{ color: "var(--text-muted)", fontSize: 11 }}>
+                                    The form field name n8n uses to receive the image binary.
+                                    Default: <code style={{ color: "var(--accent)" }}>mediaFile</code>
+                                </small>
                             </div>
-                        )}
-
-                        <div className="form-group">
-                            <label>Binary Field Name</label>
-                            <input
-                                type="text"
-                                value={profileForm.binaryFieldName}
-                                onChange={(e) =>
-                                    setProfileForm({
-                                        ...profileForm,
-                                        binaryFieldName: e.target.value,
-                                    })
-                                }
-                                placeholder="mediaFile"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label>Extra Payload (JSON)</label>
-                            <textarea
-                                value={profileForm.extraPayloadJson}
-                                onChange={(e) =>
-                                    setProfileForm({
-                                        ...profileForm,
-                                        extraPayloadJson: e.target.value,
-                                    })
-                                }
-                                placeholder='{"key": "value"}'
-                                rows={3}
-                            />
-                        </div>
+                            <div className="form-group">
+                                <label>Extra Payload Fields (JSON)</label>
+                                <textarea
+                                    value={profileForm.extraPayloadJson}
+                                    onChange={(e) =>
+                                        setProfileForm({
+                                            ...profileForm,
+                                            extraPayloadJson: e.target.value,
+                                        })
+                                    }
+                                    placeholder='{"channel": "linkedin", "priority": "high"}'
+                                    rows={3}
+                                    style={{ fontFamily: "monospace", fontSize: 12 }}
+                                />
+                                <small style={{ color: "var(--text-muted)", fontSize: 11 }}>
+                                    Additional key-value pairs sent with every publish request
+                                </small>
+                            </div>
+                        </fieldset>
 
                         <div className="modal-actions">
                             <button
@@ -444,7 +710,11 @@ export default function SettingsPage() {
                             >
                                 Cancel
                             </button>
-                            <button className="btn btn-primary" onClick={saveProfile}>
+                            <button
+                                className="btn btn-primary"
+                                onClick={saveProfile}
+                                disabled={!profileForm.name || !profileForm.webhookUrl}
+                            >
                                 {editingProfileId ? "Save Changes" : "Create Profile"}
                             </button>
                         </div>

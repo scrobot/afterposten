@@ -1,0 +1,189 @@
+{
+    "name": "Post Studio → LinkedIn Publisher",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "linkedin-post",
+                "options": {
+                    "rawBody": false
+                }
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                240,
+                300
+            ],
+            "webhookId": "linkedin-post"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "text",
+                            "name": "text",
+                            "value": "={{ $json.body.text }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "hashtags",
+                            "name": "hashtags",
+                            "value": "={{ $json.body.hashtags }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "postId",
+                            "name": "postId",
+                            "value": "={{ $json.body.postId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "scheduledAt",
+                            "name": "scheduledAt",
+                            "value": "={{ $json.body.scheduledAt }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "hasImage",
+                            "name": "hasImage",
+                            "value": "={{ $json.body.mediaFile ? true : false }}",
+                            "type": "boolean"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "extract-fields",
+            "name": "Extract Fields",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                460,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict"
+                    },
+                    "conditions": [
+                        {
+                            "id": "has-image",
+                            "leftValue": "={{ $json.hasImage }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "check-image",
+            "name": "Has Image?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                680,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "content": "## Post Ready for LinkedIn\n\n**Text:** {{ $json.text }}\n\n**Hashtags:** {{ $json.hashtags }}\n\n**Post ID:** {{ $json.postId }}\n\n**Scheduled:** {{ $json.scheduledAt }}\n\n---\n\n### Next Steps\n\nConnect a **LinkedIn** node here to publish the post.\n\nOr use an **HTTP Request** node to call the LinkedIn API directly.",
+                "height": 380,
+                "width": 340
+            },
+            "id": "sticky-note",
+            "name": "Sticky Note",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                920,
+                160
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={ \"success\": true, \"message\": \"Post received: {{ $json.postId }}\" }",
+                "options": {}
+            },
+            "id": "respond-success",
+            "name": "Respond Success",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                920,
+                500
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Fields",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Fields": {
+            "main": [
+                [
+                    {
+                        "node": "Has Image?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Has Image?": {
+            "main": [
+                [
+                    {
+                        "node": "Respond Success",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Respond Success",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [
+        {
+            "name": "post-studio",
+            "createdAt": "2025-01-01T00:00:00.000Z",
+            "updatedAt": "2025-01-01T00:00:00.000Z"
+        }
+    ],
+    "triggerCount": 0,
+    "updatedAt": "2025-01-01T00:00:00.000Z",
+    "versionId": "1"
+}
