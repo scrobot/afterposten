@@ -1,4 +1,4 @@
-# Post Studio (localhost) — Requirements (MVP)
+# Afterposten (localhost) — Requirements (MVP)
 
 ## 1) Purpose
 

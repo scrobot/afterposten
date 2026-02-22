@@ -1,5 +1,5 @@
 {
-    "name": "Post Studio → LinkedIn Publisher",
+    "name": "Afterposten → LinkedIn Publisher",
     "nodes": [
         {
             "parameters": {
@@ -178,7 +178,7 @@
     "staticData": null,
     "tags": [
         {
-            "name": "post-studio",
+            "name": "afterposten",
             "createdAt": "2025-01-01T00:00:00.000Z",
             "updatedAt": "2025-01-01T00:00:00.000Z"
         }

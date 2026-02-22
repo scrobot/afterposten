@@ -90,7 +90,7 @@ function createWindow(port) {
         height: 860,
         minWidth: 900,
         minHeight: 600,
-        title: "Post Studio",
+        title: "Afterposten",
         titleBarStyle: "hiddenInset",
         trafficLightPosition: { x: 16, y: 16 },
         backgroundColor: "#0a0a0f",

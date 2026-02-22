@@ -19,7 +19,7 @@ describe("n8n publisher adapter", () => {
             authHeaderValueEnc: null,
             bearerTokenEnc: null,
             binaryFieldName: "mediaFile",
-            extraPayloadJson: '{"source": "post-studio"}',
+            extraPayloadJson: '{"source": "afterposten"}',
             createdAt: new Date(),
             updatedAt: new Date(),
         };
@@ -39,7 +39,7 @@ describe("n8n publisher adapter", () => {
             postId: "post-123",
             scheduledAt: "2024-01-15T14:30:00",
             profileName: "Test Profile",
-            extraFields: { source: "post-studio" },
+            extraFields: { source: "afterposten" },
             imagePath: null,
             imageFormat: "png",
             binaryFieldName: "mediaFile",

@@ -301,7 +301,7 @@ export default function SettingsPage() {
                                 </button>
                                 <a
                                     href="/n8n-workflow-blueprint.json"
-                                    download="post-studio-n8n-workflow.json"
+                                    download="afterposten-n8n-workflow.json"
                                     className="btn btn-sm btn-secondary"
                                     style={{ textDecoration: "none" }}
                                 >
@@ -418,7 +418,7 @@ export default function SettingsPage() {
                             <div style={{ fontSize: 48, marginBottom: 12 }}>🔌</div>
                             <h3 style={{ marginBottom: 6, fontWeight: 600 }}>No profiles yet</h3>
                             <p style={{ color: "var(--text-muted)", fontSize: 13, maxWidth: 360, margin: "0 auto", lineHeight: 1.5 }}>
-                                Create a publisher profile to connect Post Studio to your n8n webhook workflow.
+                                Create a publisher profile to connect Afterposten to your n8n webhook workflow.
                             </p>
                             <button
                                 className="btn btn-primary"

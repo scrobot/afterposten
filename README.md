@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📮 Post Studio
+# 📮 Afterposten
 
 **AI-powered LinkedIn post creation, scheduling, and publishing — as a desktop app.**
 
@@ -16,13 +16,13 @@
 
 ## ✨ What is this?
 
-Post Studio is a **local-first desktop app** that turns rough ideas into polished LinkedIn posts using AI. Write an idea, generate multiple draft variants, pick your favorite, attach an AI-generated image, schedule it, and publish to LinkedIn via n8n webhooks — all from one clean interface.
+Afterposten is a **local-first desktop app** that turns rough ideas into polished LinkedIn posts using AI. Write an idea, generate multiple draft variants, pick your favorite, attach an AI-generated image, schedule it, and publish to LinkedIn via n8n webhooks — all from one clean interface.
 
 **No cloud accounts. No subscriptions. Your data stays on your machine.**
 
 <div align="center">
 
-<img src="docs/demo.webp" alt="Post Studio Demo" width="700" />
+<img src="docs/demo.webp" alt="Afterposten Demo" width="700" />
 
 *Create → Generate → Edit → Schedule → Publish*
 
@@ -141,7 +141,7 @@ pnpm build:electron
 
 ## 🔌 n8n Integration
 
-Post Studio publishes via **n8n webhooks**. Set up a workflow in n8n that:
+Afterposten publishes via **n8n webhooks**. Set up a workflow in n8n that:
 
 1. Receives a **Webhook** trigger (POST, multipart/form-data)
 2. Reads the fields: `text`, `hashtags` (JSON array), `postId`, `scheduledAt`

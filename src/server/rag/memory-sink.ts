@@ -27,7 +27,7 @@ export async function ingestPublishedPost(data: {
                 altText: data.altText,
                 publishedAt: data.publishedAt,
                 metadata: {
-                    source: "post-studio",
+                    source: "afterposten",
                     language: "en",
                 },
             }),

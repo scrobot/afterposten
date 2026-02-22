@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-## Project: Post Studio (localhost) — MVP
+## Project: Afterposten (localhost) — MVP
 
 You are a coding agent working inside this repository. Your job is to implement the MVP described in `spec.md` end-to-end, with strong test coverage and a reliable dev workflow.
 

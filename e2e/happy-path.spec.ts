@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Post Studio E2E", () => {
+test.describe("Afterposten E2E", () => {
     test("create post, view editor, navigate to settings", async ({ page }) => {
         // Navigate to posts list
         await page.goto("/posts");
