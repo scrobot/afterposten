@@ -394,6 +394,46 @@
             color: var(--text-primary);
         }
 
+        /* ─── Demo Showcase ─── */
+        .demo-showcase {
+            position: relative;
+            z-index: 1;
+            max-width: 960px;
+            margin: 0 auto 80px;
+            padding: 0 24px;
+        }
+
+        .demo-frame {
+            position: relative;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 40px var(--accent-glow);
+        }
+
+        .demo-frame img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 17px;
+        }
+
+        .demo-frame::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 18px;
+            padding: 1px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end), transparent, transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
         /* ─── CTA ─── */
         .cta {
             position: relative;
@@ -558,6 +598,13 @@
             </div>
         </div>
     </section>
+
+    <!-- Demo Showcase -->
+    <div class="demo-showcase animate-in delay-4">
+        <div class="demo-frame">
+            <img src="demo.webp" alt="Afterposten AI Studio — App Demo" loading="lazy">
+        </div>
+    </div>
 
     <!-- Pipeline -->
     <div class="pipeline animate-in delay-4">
