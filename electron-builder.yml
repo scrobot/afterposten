@@ -6,10 +6,11 @@ directories:
   output: dist
   buildResources: build
 
+asar: false
+npmRebuild: false
+
 files:
   - "electron/**/*"
-  - ".next/standalone/**/*"
-  - ".next/static/**/*"
   - "public/**/*"
   - "prisma/**/*"
   - "package.json"
@@ -19,8 +20,21 @@ extraResources:
     to: "app"
     filter:
       - "**/*"
+      - "!**/node_modules/.pnpm"
   - from: ".next/static"
     to: "app/.next/static"
+    filter:
+      - "**/*"
+  - from: "node_modules/.prisma"
+    to: "app/node_modules/.prisma"
+    filter:
+      - "**/*"
+  - from: "node_modules/@prisma"
+    to: "app/node_modules/@prisma"
+    filter:
+      - "**/*"
+  - from: "node_modules/better-sqlite3"
+    to: "app/node_modules/better-sqlite3"
     filter:
       - "**/*"
 
