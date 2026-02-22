@@ -1,6 +1,6 @@
 <div align="center">
 
-# 📮 Afterposten
+# 📮 Afterposten. AI Studio
 
 **AI-powered LinkedIn post creation, scheduling, and publishing — as a desktop app.**
 
@@ -8,7 +8,7 @@
 [![Release](https://github.com/scrobot/afterposten/actions/workflows/release.yml/badge.svg)](https://github.com/scrobot/afterposten/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-*From idea to published LinkedIn post in minutes, not hours.*
+_From idea to published LinkedIn post in minutes, not hours._
 
 </div>
 
@@ -24,24 +24,24 @@ Afterposten is a **local-first desktop app** that turns rough ideas into polishe
 
 <img src="docs/demo.webp" alt="Afterposten Demo" width="700" />
 
-*Create → Generate → Edit → Schedule → Publish*
+_Create → Generate → Edit → Schedule → Publish_
 
 </div>
 
 ## 🚀 Features
 
-| Feature | Description |
-|---------|-------------|
-| 💡 **Idea → Draft** | Paste an idea, AI generates a full LinkedIn post with hook, body, CTA, and hashtags |
-| 🔄 **Variant Generation** | Get 3–5 different angles on the same idea, pick the best one |
-| 🖼️ **AI Image Generation** | Generate post images with style presets (clean-tech, editorial, bold-minimal, etc.) |
-| #️⃣ **Smart Hashtags** | AI suggests 5–15 relevant hashtags based on your content |
-| 📅 **Scheduling** | Set a date/time in your timezone, the scheduler handles the rest |
-| 🔌 **n8n Integration** | Publish via webhook with multipart/form-data — text, image, metadata |
-| 🔒 **Encrypted Credentials** | Publisher auth tokens encrypted at rest (AES-256-GCM) |
-| 🧠 **RAG Hooks** | Optional voice/style context from external RAG for brand consistency |
-| ⚡ **Real-time Streaming** | Watch the AI draft appear word-by-word as it generates |
-| 🖥️ **Desktop App** | Runs as a native Electron app on macOS, Windows, and Linux |
+| Feature                      | Description                                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 💡 **Idea → Draft**          | Paste an idea, AI generates a full LinkedIn post with hook, body, CTA, and hashtags                           |
+| 🔄 **Variant Generation**    | Get 3–5 different angles on the same idea, pick the best one                                                  |
+| 🖼️ **AI Image Generation**   | Generate post images with style presets (clean-tech, editorial, bold-minimal, etc.)                           |
+| #️⃣ **Smart Hashtags**        | AI suggests 5–15 relevant hashtags based on your content                                                      |
+| 📅 **Scheduling**            | Set a date/time in your timezone, the scheduler handles the rest                                              |
+| 🔌 **n8n Integration**       | Publish via webhook with multipart/form-data — text, image, metadata                                          |
+| 🔒 **Encrypted Credentials** | Publisher auth tokens encrypted at rest (AES-256-GCM)                                                         |
+| 🧠 **Knowledge Base (RAG)**  | Embedded Vectra vector DB for voice/style context — add URLs, text docs, or let it auto-learn from your posts |
+| ⚡ **Real-time Streaming**   | Watch the AI draft appear word-by-word as it generates                                                        |
+| 🖥️ **Desktop App**           | Runs as a native Electron app on macOS, Windows, and Linux                                                    |
 
 ## 🏗️ Architecture
 
@@ -63,8 +63,8 @@ Afterposten is a **local-first desktop app** that turns rough ideas into polishe
 │  │       └──┬──┴──┬───┴───┬───┴──┬───┘           │  │
 │  │          │     │       │      │                │  │
 │  │          ▼     ▼       ▼      ▼                │  │
-│  │       OpenAI  n8n   Poller  SQLite             │  │
-│  │        API   Webhook        (Prisma)           │  │
+│  │       OpenAI  n8n   Poller  SQLite    Vectra   │  │
+│  │        API   Webhook        (Prisma)  (RAG)    │  │
 │  └───────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────┘
 ```
@@ -75,12 +75,12 @@ Afterposten is a **local-first desktop app** that turns rough ideas into polishe
 
 Grab the latest release for your platform from [**Releases**](https://github.com/scrobot/afterposten/releases):
 
-| Platform | Format |
-|----------|--------|
-| macOS (Apple Silicon) | `.dmg` / `.zip` |
-| macOS (Intel) | `.dmg` / `.zip` |
-| Windows | `.exe` (NSIS installer) / `.zip` |
-| Linux | `.AppImage` / `.deb` |
+| Platform              | Format                           |
+| --------------------- | -------------------------------- |
+| macOS (Apple Silicon) | `.dmg` / `.zip`                  |
+| macOS (Intel)         | `.dmg` / `.zip`                  |
+| Windows               | `.exe` (NSIS installer) / `.zip` |
+| Linux                 | `.AppImage` / `.deb`             |
 
 ### Build from Source
 
@@ -114,10 +114,6 @@ ENCRYPTION_KEY=your-64-char-hex-string
 
 # Optional: Database location (defaults to file:./dev.db)
 DATABASE_URL=file:./dev.db
-
-# Optional: RAG integration for voice/style consistency
-MEMORY_SOURCE_URL=
-MEMORY_SINK_URL=
 ```
 
 ## 🛠️ Development
@@ -150,11 +146,11 @@ Afterposten publishes via **n8n webhooks**. Set up a workflow in n8n that:
 
 ### Authentication Options
 
-| Mode | Description |
-|------|-------------|
-| **None** | No auth (for local n8n instances) |
+| Mode              | Description                                       |
+| ----------------- | ------------------------------------------------- |
+| **None**          | No auth (for local n8n instances)                 |
 | **Custom Header** | Send a custom header (e.g., `X-Auth-Key: secret`) |
-| **Bearer Token** | Standard `Authorization: Bearer <token>` |
+| **Bearer Token**  | Standard `Authorization: Bearer <token>`          |
 
 All auth credentials are **AES-256-GCM encrypted** at rest in the local database.
 
@@ -169,25 +165,26 @@ pnpm typecheck      # TypeScript strict mode
 
 ### Test Coverage
 
-| Suite | Tests | What it covers |
-|-------|-------|----------------|
-| `schemas.test.ts` | 19 | Zod schema validation for all AI contracts |
-| `tz-utils.test.ts` | 10 | Timezone conversion (CET/CEST, midnight, boundaries) |
-| `publisher-adapter.test.ts` | 5 | n8n adapter auth modes, FormData, sanitized logging |
-| `crypto.test.ts` | 3 | AES-256-GCM encrypt/decrypt, random IV |
+| Suite                       | Tests | What it covers                                       |
+| --------------------------- | ----- | ---------------------------------------------------- |
+| `schemas.test.ts`           | 19    | Zod schema validation for all AI contracts           |
+| `tz-utils.test.ts`          | 10    | Timezone conversion (CET/CEST, midnight, boundaries) |
+| `publisher-adapter.test.ts` | 5     | n8n adapter auth modes, FormData, sanitized logging  |
+| `crypto.test.ts`            | 3     | AES-256-GCM encrypt/decrypt, random IV               |
 
 ## 🏛️ Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Desktop** | Electron 40 |
-| **Frontend** | Next.js 16 (App Router), React 19, TypeScript |
-| **AI** | Vercel AI SDK (`streamObject`), OpenAI GPT-4o / GPT-Image-1 |
-| **Database** | SQLite (Prisma 7 + better-sqlite3 driver adapter) |
-| **Scheduling** | Polling scheduler with atomic locking and exponential backoff |
-| **Publishing** | n8n webhooks via multipart/form-data |
-| **Security** | AES-256-GCM encryption for auth credentials |
-| **Testing** | Vitest + Playwright |
+| Layer          | Technology                                                       |
+| -------------- | ---------------------------------------------------------------- |
+| **Desktop**    | Electron 40                                                      |
+| **Frontend**   | Next.js 16 (App Router), React 19, TypeScript                    |
+| **AI**         | Vercel AI SDK (`streamObject`), OpenAI GPT-4o / GPT-Image-1      |
+| **RAG**        | Vectra (embedded vector DB, file-backed, text-embedding-3-small) |
+| **Database**   | SQLite (Prisma 7 + better-sqlite3 driver adapter)                |
+| **Scheduling** | Polling scheduler with atomic locking and exponential backoff    |
+| **Publishing** | n8n webhooks via multipart/form-data                             |
+| **Security**   | AES-256-GCM encryption for auth credentials                      |
+| **Testing**    | Vitest + Playwright                                              |
 
 ## 📄 License
 
