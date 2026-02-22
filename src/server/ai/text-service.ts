@@ -4,19 +4,32 @@ import { draftOutputSchema, hashtagsOutputSchema, variantsOutputSchema } from "@
 import { MODEL_TEXT_PRIMARY, MODEL_TEXT_LIGHT } from "@/config/constants";
 
 /**
+ * Build an optional instruction block from user-defined agent prompt instructions.
+ */
+export function buildInstructionsBlock(agentInstructions?: string | null): string {
+    if (!agentInstructions?.trim()) return "";
+    return `\n\nAdditional instructions from the user:\n${agentInstructions.trim()}`;
+}
+
+/**
  * Stream a draft from an idea using Vercel AI SDK structured output.
  */
-export function streamDraft(idea: string, voiceContext?: string | null) {
+export function streamDraft(
+    idea: string,
+    voiceContext?: string | null,
+    agentInstructions?: string | null
+) {
     const contextBlock = voiceContext
         ? `\n\nVoice/style context from the user's brand:\n${voiceContext}`
         : "";
+    const instructionsBlock = buildInstructionsBlock(agentInstructions);
 
     return streamObject({
         model: openai(MODEL_TEXT_PRIMARY),
         schema: draftOutputSchema,
         prompt: `You are a LinkedIn content strategist. Write a compelling LinkedIn post based on this idea.
 
-Idea: ${idea}${contextBlock}
+Idea: ${idea}${contextBlock}${instructionsBlock}
 
 Requirements:
 - hook: 1–2 punchy opening lines that stop the scroll
@@ -33,15 +46,21 @@ Write in English. Keep it professional but engaging. Avoid corporate jargon.`,
 /**
  * Stream multiple draft variants.
  */
-export function streamVariants(idea: string, count: number = 3, voiceContext?: string | null) {
+export function streamVariants(
+    idea: string,
+    count: number = 3,
+    voiceContext?: string | null,
+    agentInstructions?: string | null
+) {
     const contextBlock = voiceContext ? `\n\nVoice/style context:\n${voiceContext}` : "";
+    const instructionsBlock = buildInstructionsBlock(agentInstructions);
 
     return streamObject({
         model: openai(MODEL_TEXT_PRIMARY),
         schema: variantsOutputSchema,
         prompt: `You are a LinkedIn content strategist. Create ${count} distinct variants of a LinkedIn post based on this idea.
 
-Idea: ${idea}${contextBlock}
+Idea: ${idea}${contextBlock}${instructionsBlock}
 
 Each variant should have a different angle, tone, or approach.
 Requirements per variant:
@@ -79,15 +98,20 @@ Focus on:
 /**
  * Non-streaming draft generation (for testing/internal use).
  */
-export async function generateDraft(idea: string, voiceContext?: string | null) {
+export async function generateDraft(
+    idea: string,
+    voiceContext?: string | null,
+    agentInstructions?: string | null
+) {
     const contextBlock = voiceContext ? `\n\nVoice/style context:\n${voiceContext}` : "";
+    const instructionsBlock = buildInstructionsBlock(agentInstructions);
 
     const result = await generateObject({
         model: openai(MODEL_TEXT_PRIMARY),
         schema: draftOutputSchema,
         prompt: `You are a LinkedIn content strategist. Write a compelling LinkedIn post.
 
-Idea: ${idea}${contextBlock}
+Idea: ${idea}${contextBlock}${instructionsBlock}
 
 Requirements:
 - hook: 1–2 punchy lines

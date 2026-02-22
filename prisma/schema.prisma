@@ -114,6 +114,7 @@ model AppSettings {
   schedulerPollIntervalSec  Int     @default(10) @map("scheduler_poll_interval_sec")
   defaultPublisherProfileId String? @map("default_publisher_profile_id")
   maxPublishAttempts        Int     @default(5) @map("max_publish_attempts")
+  agentPromptInstructions   String  @default("") @map("agent_prompt_instructions")
 
   defaultPublisherProfile PublisherProfile? @relation("DefaultPublisherProfile", fields: [defaultPublisherProfileId], references: [id], onDelete: SetNull)
 

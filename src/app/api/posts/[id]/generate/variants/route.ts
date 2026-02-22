@@ -3,6 +3,7 @@ import { streamVariants } from "@/server/ai/text-service";
 import * as postsRepo from "@/server/db/repositories/posts";
 import * as draftsRepo from "@/server/db/repositories/drafts";
 import { fetchVoiceContext } from "@/server/rag/memory-source";
+import { getSettings } from "@/server/db/repositories/settings";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -16,8 +17,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const body = await request.json().catch(() => ({}));
     const count = Math.min(Math.max(body.count ?? 3, 1), 5);
 
-    const voiceContext = await fetchVoiceContext(post.idea);
-    const result = streamVariants(post.idea, count, voiceContext);
+    const [voiceContext, settings] = await Promise.all([
+        fetchVoiceContext(post.idea),
+        getSettings(),
+    ]);
+    const result = streamVariants(
+        post.idea,
+        count,
+        voiceContext,
+        settings.agentPromptInstructions || null
+    );
 
     // Save each variant to DB after streaming completes
     result.object

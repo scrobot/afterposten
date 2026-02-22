@@ -7,10 +7,7 @@ export async function GET() {
         return NextResponse.json(settings);
     } catch (error) {
         console.error("GET /api/settings error:", error);
-        return NextResponse.json(
-            { error: "Failed to fetch settings" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 });
     }
 }
 
@@ -27,14 +24,12 @@ export async function PUT(request: NextRequest) {
             maxPublishAttempts: body.maxPublishAttempts
                 ? Number(body.maxPublishAttempts)
                 : undefined,
+            agentPromptInstructions: body.agentPromptInstructions,
         });
 
         return NextResponse.json(settings);
     } catch (error) {
         console.error("PUT /api/settings error:", error);
-        return NextResponse.json(
-            { error: "Failed to update settings" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Failed to update settings" }, { status: 500 });
     }
 }

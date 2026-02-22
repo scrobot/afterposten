@@ -19,6 +19,7 @@ export async function updateSettings(data: {
     schedulerPollIntervalSec?: number;
     defaultPublisherProfileId?: string | null;
     maxPublishAttempts?: number;
+    agentPromptInstructions?: string;
 }) {
     return prisma.appSettings.upsert({
         where: { id: "singleton" },

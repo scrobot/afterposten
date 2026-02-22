@@ -3,6 +3,7 @@ import { streamDraft } from "@/server/ai/text-service";
 import * as postsRepo from "@/server/db/repositories/posts";
 import * as draftsRepo from "@/server/db/repositories/drafts";
 import { fetchVoiceContext } from "@/server/rag/memory-source";
+import { getSettings } from "@/server/db/repositories/settings";
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -14,10 +15,13 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     }
 
     // Fetch optional voice context from RAG (queries local Vectra)
-    const voiceContext = await fetchVoiceContext(post.idea);
+    const [voiceContext, settings] = await Promise.all([
+        fetchVoiceContext(post.idea),
+        getSettings(),
+    ]);
 
     // Stream the draft using Vercel AI SDK
-    const result = streamDraft(post.idea, voiceContext);
+    const result = streamDraft(post.idea, voiceContext, settings.agentPromptInstructions || null);
 
     // Save the completed draft to DB after streaming finishes
     result.object
